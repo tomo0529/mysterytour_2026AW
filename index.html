@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>秋のミステリーツアー</title>
+    <!-- M PLUS Rounded 1c フォントの読み込み -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1p&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSSの読み込みとカスタム設定 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'autumn-bg': '#F5F3ED',      // オフホワイト
+                        'autumn-text': '#3E3129',    // ダークブラウン
+                        'autumn-accent': '#C86B40',  // テラコッタ
+                        'autumn-accent-light': '#e0865d',
+                        'card-bg': '#ffffff'
+                    },
+                    fontFamily: {
+                        'sans': ['"M PLUS Rounded 1c"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(62, 49, 41, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F5F3ED;
+            color: #3E3129;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* タイムラインの線と丸 */
+        .timeline-line::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            bottom: -24px;
+            width: 2px;
+            background-color: #F5F3ED;
+        }
+        .timeline-item:last-child .timeline-line::before {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col pb-20">
+
+    <!-- ヘッダー -->
+    <header class="bg-autumn-bg/80 backdrop-blur-md sticky top-0 z-50 px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <span class="text-xl">🍁</span>
+            <h1 class="font-bold text-sm tracking-widest text-autumn-text">秋のミステリーツアー</h1>
+        </div>
+        <!-- 当日モード時に表示されるタブナビゲーション -->
+        <div id="nav-tabs" class="flex space-x-2 hidden">
+            <button onclick="switchTab('mission')" id="tab-mission" class="px-4 py-1.5 text-xs font-bold rounded-full bg-autumn-accent text-white transition-colors">ミッション</button>
+            <button onclick="switchTab('itinerary')" id="tab-itinerary" class="px-4 py-1.5 text-xs font-bold rounded-full text-autumn-text bg-white shadow-soft transition-colors hover:bg-gray-50">旅のしおり</button>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-md mx-auto p-5 flex flex-col space-y-6">
+
+        <!-- ========================================== -->
+        <!-- 1. 旅行前モード (事前案内画面) -->
+        <!-- ========================================== -->
+        <section id="pre-tour-view" class="space-y-6 fade-in hidden">
+            
+            <!-- ロゴ画像（こちらをご自身の画像パスやURLに差し替えてください） -->
+            <div class="text-center py-6">
+                <img src="https://placehold.co/800x400/F5F3ED/C86B40?text=MYSTERY+TOUR+LOGO" alt="秋のミステリーツアー" class="mx-auto w-full max-w-sm h-auto object-contain drop-shadow-sm">
+            </div>
+
+            <!-- 旅の概要 -->
+            <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
+                <h3 class="font-bold text-lg border-b-2 border-autumn-bg pb-2 flex items-center">
+                    <span class="text-autumn-accent mr-2">📋</span> 旅の概要
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500 font-medium">日程</span>
+                        <span class="font-bold text-autumn-text">10月24日(土) - 25日(日)</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500 font-medium">集合・出発</span>
+                        <span class="font-bold text-autumn-text">10:00 松戸出発</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2 text-right">※ミッションの指示に従い、目的地が決定します。</p>
+                </div>
+            </div>
+
+            <!-- 持ち物リスト -->
+            <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
+                <h3 class="font-bold text-lg border-b-2 border-autumn-bg pb-2 flex items-center">
+                    <span class="text-autumn-accent mr-2">🎒</span> 持ち物リスト
+                </h3>
+                <p class="text-xs text-gray-500 mb-2 font-medium">いつもの旅行用の荷物に加えて、下記も準備してください。</p>
+                <ul class="space-y-4 text-sm font-medium text-autumn-text pl-1">
+                    <li class="flex items-start">
+                        <span class="text-autumn-accent mr-3 mt-0.5">●</span>
+                        <div>
+                            <span class="font-bold">水着</span>
+                            <p class="text-xs text-gray-500 font-normal mt-0.5">宿にはサウナ完備！</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-autumn-accent mr-3 mt-0.5">●</span>
+                        <div>
+                            <span class="font-bold">防寒着</span>
+                            <p class="text-xs text-gray-500 font-normal mt-0.5">朝晩はかなり冷え込みます。</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-autumn-accent mr-3 mt-0.5">●</span>
+                        <div>
+                            <span class="font-bold">動きやすい服装とスニーカー</span>
+                            <p class="text-xs text-gray-500 font-normal mt-0.5">カラダを動かす企画も準備しています</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="text-center pt-4">
+                <p class="font-bold text-autumn-accent text-sm">それでは、当日をお楽しみに！</p>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 2. 旅行当日モード (謎解き＆進行画面) -->
+        <!-- ========================================== -->
+        <section id="tour-day-view" class="hidden">
+            
+            <!-- ▼ ミッションタブ画面 ▼ -->
+            <div id="mission-tab-content" class="space-y-6 fade-in">
+                
+                <!-- 第1ミッション (未クリア時) -->
+                <div id="mission-1-active" class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-5">
+                    <div>
+                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">MISSION 1</span>
+                        <h3 class="text-lg font-bold text-autumn-text">最初の目的地を特定せよ</h3>
+                        <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                            フリック入力の法則を見破り、暗号が示す7文字のコードを導き出せ。
+                        </p>
+                    </div>
+
+                    <!-- 例題 -->
+                    <div class="bg-autumn-bg rounded-2xl p-4 text-center">
+                        <span class="text-[10px] text-gray-500 font-bold block mb-2">【例題】</span>
+                        <div class="flex justify-center items-center space-x-6 text-sm font-bold">
+                            <div><span class="text-autumn-text">[か]</span> ← <span class="text-autumn-accent ml-1">き</span></div>
+                            <div class="w-px h-6 bg-gray-300"></div>
+                            <div><span class="text-autumn-text">[な]</span> ↓ <span class="text-autumn-accent ml-1">の</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 本題 -->
+                    <div class="bg-autumn-bg rounded-2xl p-5 text-center">
+                        <span class="text-[10px] text-gray-500 font-bold block mb-3">【暗号】</span>
+                        <div class="font-bold text-lg text-autumn-text tracking-widest leading-loose">
+                            <span class="inline-block mx-1">[ら]<span class="text-autumn-accent font-black">↑</span></span>
+                            <span class="inline-block mx-1">[か]<span class="text-autumn-accent font-black">↓</span></span>
+                            <span class="inline-block mx-1">[ら]<span class="text-autumn-accent font-black">↑</span></span>
+                            <br>
+                            <span class="inline-block mx-1 text-sm">[ABC]<span class="text-autumn-accent font-black text-lg">↓</span></span>
+                            <span class="inline-block mx-1 text-autumn-accent font-black">＋</span>
+                            <span class="inline-block mx-1">[か]<span class="text-autumn-accent font-black">↓</span></span>
+                            <span class="inline-block mx-1 text-sm">[ABC]<span class="text-autumn-accent font-black text-lg">↓</span></span>
+                        </div>
+                    </div>
+
+                    <!-- 入力フォーム -->
+                    <div class="space-y-2 pt-2">
+                        <label class="text-xs font-bold text-gray-500 pl-1">解答コード(7文字)を入力</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="answer-input" placeholder="例: A1B2+C3" class="flex-1 bg-autumn-bg border-none rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent uppercase transition-shadow placeholder-gray-400">
+                            <button onclick="checkAnswer()" class="bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold px-6 py-3 rounded-2xl transition-colors shadow-sm active:scale-95">判定</button>
+                        </div>
+                        <div id="error-msg" class="hidden mt-2 text-autumn-accent text-xs font-bold text-center">
+                            コードが違います。フリックの方向を確認！
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第1ミッション (クリア後) -->
+                <div id="mission-1-cleared" class="hidden fade-in bg-card-bg rounded-3xl p-6 shadow-soft space-y-4 border-2 border-autumn-accent/20">
+                    <div class="flex justify-between items-start">
+                        <span class="inline-block px-3 py-1 bg-autumn-accent/10 text-autumn-accent font-bold text-xs rounded-full">MISSION CLEAR!</span>
+                        <span class="text-2xl">🎉</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-autumn-text">正解！</h3>
+                    
+                    <div class="bg-autumn-bg rounded-2xl p-5 space-y-2 mt-4 text-center">
+                        <p class="text-xs text-gray-500 font-bold">次の目的地は…</p>
+                        <p class="text-xl font-extrabold text-autumn-accent">三芳PA <span class="text-sm font-bold text-autumn-text">(下り)</span></p>
+                    </div>
+                    <p class="text-xs text-center text-gray-500 mt-4">まずは朝のおやつとコーヒーを調達するぞ！<br>ナビをセットして出発せよ！</p>
+                </div>
+            </div>
+
+            <!-- ▼ 旅のしおりタブ画面 ▼ -->
+            <div id="itinerary-tab-content" class="hidden fade-in space-y-6">
+                
+                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-6">
+                    <!-- 1日目 -->
+                    <div>
+                        <h4 class="font-bold text-lg text-autumn-text mb-4 border-b-2 border-autumn-bg pb-2">1日目：10月24日(土)</h4>
+                        <div class="space-y-0 text-sm relative">
+                            <!-- タイムライン要素 -->
+                            <div class="timeline-item relative pl-8 pb-6">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-autumn-accent flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">10:00</p>
+                                <p class="font-bold text-autumn-text mt-1">松戸 出発</p>
+                            </div>
+                            <div class="timeline-item relative pl-8 pb-6">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300 flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">11:00</p>
+                                <p class="font-bold text-autumn-text mt-1">三芳PA (下り)</p>
+                            </div>
+                            <div class="timeline-item relative pl-8 pb-6">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300 flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">13:00</p>
+                                <p class="font-bold text-autumn-text mt-1">旧軽井沢 ランチ＆散策</p>
+                            </div>
+                            <div class="timeline-item relative pl-8 pb-6">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300 flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">14:45</p>
+                                <p class="font-bold text-autumn-text mt-1">松井農園 (りんご狩り)</p>
+                            </div>
+                            <div class="timeline-item relative pl-8 pb-6">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300 flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">16:30</p>
+                                <p class="font-bold text-autumn-text mt-1">白糸の滝 (夕暮れ散策)</p>
+                            </div>
+                            <div class="timeline-item relative pl-8 pb-6">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300 flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">17:30</p>
+                                <p class="font-bold text-autumn-text mt-1">ツルヤ 軽井沢店 (買い出し)</p>
+                            </div>
+                            <div class="timeline-item relative pl-8">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300 flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">18:40</p>
+                                <p class="font-bold text-autumn-text mt-1">秘密のアジト到着</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-6">
+                    <!-- 2日目 -->
+                    <div>
+                        <h4 class="font-bold text-lg text-autumn-text mb-4 border-b-2 border-autumn-bg pb-2">2日目：10月25日(日)</h4>
+                        <div class="space-y-0 text-sm relative">
+                            <!-- タイムライン要素 -->
+                            <div class="timeline-item relative pl-8 pb-6">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300 flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">10:00</p>
+                                <p class="font-bold text-autumn-text mt-1">アジト 出発</p>
+                            </div>
+                            <div class="timeline-item relative pl-8 pb-6">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300 flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">10:45</p>
+                                <p class="font-bold text-autumn-text mt-1">アミーチアドベンチャー軽井沢</p>
+                            </div>
+                            <div class="timeline-item relative pl-8 pb-6">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300 flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">13:30</p>
+                                <p class="font-bold text-autumn-text mt-1">軽井沢ランチ</p>
+                            </div>
+                            <div class="timeline-item relative pl-8">
+                                <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300 flex items-center justify-center"></div>
+                                <p class="font-bold text-autumn-accent">19:30頃</p>
+                                <p class="font-bold text-autumn-text mt-1">松戸 帰着・解散</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // ==========================================
+        // 幹事用設定フラグ：旅行当日に true に変更してください
+        // ==========================================
+        let isTourStarted = false; 
+        
+        // 初期化処理
+        document.addEventListener('DOMContentLoaded', () => {
+            const preTourView = document.getElementById('pre-tour-view');
+            const tourDayView = document.getElementById('tour-day-view');
+            const navTabs = document.getElementById('nav-tabs');
+
+            if (isTourStarted) {
+                // 旅行当日モード
+                preTourView.classList.add('hidden');
+                tourDayView.classList.remove('hidden');
+                navTabs.classList.remove('hidden');
+            } else {
+                // 旅行前モード
+                preTourView.classList.remove('hidden');
+                tourDayView.classList.add('hidden');
+                navTabs.classList.add('hidden');
+            }
+        });
+
+        // タブ切り替え処理
+        function switchTab(tabName) {
+            const missionTab = document.getElementById('mission-tab-content');
+            const itineraryTab = document.getElementById('itinerary-tab-content');
+            const btnMission = document.getElementById('tab-mission');
+            const btnItinerary = document.getElementById('tab-itinerary');
+
+            // 選択状態のスタイルクラス
+            const activeClass = "px-4 py-1.5 text-xs font-bold rounded-full bg-autumn-accent text-white transition-colors";
+            const inactiveClass = "px-4 py-1.5 text-xs font-bold rounded-full text-autumn-text bg-white shadow-soft transition-colors hover:bg-gray-50";
+
+            if (tabName === 'mission') {
+                missionTab.classList.remove('hidden');
+                itineraryTab.classList.add('hidden');
+                btnMission.className = activeClass;
+                btnItinerary.className = inactiveClass;
+            } else {
+                missionTab.classList.add('hidden');
+                itineraryTab.classList.remove('hidden');
+                btnItinerary.className = activeClass;
+                btnMission.className = inactiveClass;
+            }
+        }
+
+        // 謎解きの判定処理
+        function checkAnswer() {
+            const inputEl = document.getElementById('answer-input');
+            const errorMsg = document.getElementById('error-msg');
+            const rawValue = inputEl.value;
+            
+            // 空白を削除し、大文字に変換して判定 (全角英数対応のため正規化は省略)
+            const cleanValue = rawValue.replace(/\s+/g, '').toUpperCase();
+            
+            if (cleanValue === 'RGR3+G3' || cleanValue === 'RGR3＋G3') { // ＋の全角半角どちらでもOK
+                // 正解の処理
+                errorMsg.classList.add('hidden');
+                document.getElementById('mission-1-active').classList.add('hidden');
+                const clearedDiv = document.getElementById('mission-1-cleared');
+                clearedDiv.classList.remove('hidden');
+                
+                // 正解画面へスクロール
+                clearedDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // 不正解の処理
+                errorMsg.classList.remove('hidden');
+                
+                // 数秒後にエラーを消す
+                setTimeout(() => {
+                    errorMsg.classList.add('hidden');
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
