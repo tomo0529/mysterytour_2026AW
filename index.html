@@ -833,11 +833,10 @@
         function checkAnswer() {
             const inputEl = document.getElementById('answer-input');
             const errorMsg = document.getElementById('error-msg');
-            // 1段階目は大文字・半角の完全一致のみ（前後の空白だけ無視）
-            const raw = inputEl.value.trim();
+            // 1段階目は小文字・全角・空白・「+」の有無を問わず正解
             const v = normalizeAnswer(inputEl.value);
 
-            if (nazoStep === 1 && raw === '8Q8W8JVP+34') {
+            if (nazoStep === 1 && v.replace(/\+/g, '') === '8Q8W8JVP34') {
                 nazoStep = 2;
                 errorMsg.classList.add('hidden');
                 const step1Msg = document.getElementById('nazo-step1-ok');
