@@ -396,9 +396,9 @@
                 .replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)) // 全角英数記号→半角
                 .toUpperCase();
         }
-        // 2段階目：軽井沢の表記ゆれ＋「駅」付きを許容
+        // 2段階目：軽井沢の表記ゆれ＋「駅」「町」付きを許容
         function isKaruizawa(v) {
-            const base = v.replace(/(駅|えき|エキ|STATION|STA\.?)$/, '');
+            const base = v.replace(/(駅|えき|エキ|STATION|STA\.?|町|まち|マチ|TOWN|MACHI)$/, '');
             return ['軽井沢', 'かるいざわ', 'カルイザワ', 'KARUIZAWA'].includes(base);
         }
         function checkAnswer() {
