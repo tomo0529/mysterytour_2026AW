@@ -396,6 +396,11 @@
                 .replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)) // 全角英数記号→半角
                 .toUpperCase();
         }
+        // 2段階目：軽井沢の表記ゆれ＋「駅」付きを許容
+        function isKaruizawa(v) {
+            const base = v.replace(/(駅|えき|エキ|STATION|STA\.?)$/, '');
+            return ['軽井沢', 'かるいざわ', 'カルイザワ', 'KARUIZAWA'].includes(base);
+        }
         function checkAnswer() {
             const inputEl = document.getElementById('answer-input');
             const errorMsg = document.getElementById('error-msg');
@@ -412,7 +417,7 @@
                 inputEl.placeholder = '場所の名前を入力';
                 inputEl.classList.remove('tracking-wider');
                 inputEl.focus();
-            } else if (nazoStep === 2 && ['軽井沢', 'かるいざわ', 'カルイザワ'].includes(v)) {
+            } else if (nazoStep === 2 && isKaruizawa(v)) {
                 nazoStep = 3;
                 errorMsg.classList.add('hidden');
                 inputEl.disabled = true;
