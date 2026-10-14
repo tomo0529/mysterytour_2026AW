@@ -151,7 +151,7 @@
                     </div>
 
                     <!-- 入力フォーム（1段階目：コード → 2段階目：場所） -->
-                    <div class="space-y-2 pt-1">
+                    <div id="answer-form" class="space-y-2 pt-1">
                         <label id="answer-label" class="text-xs font-bold text-gray-500 pl-1">答えを入力</label>
                         <div class="flex space-x-2">
                             <input type="text" id="answer-input" placeholder="◯◯◯◯◯◯◯◯+◯◯" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-autumn-bg border-none rounded-2xl px-4 py-3 text-sm font-bold tracking-wider text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent transition-shadow placeholder-gray-400">
@@ -457,12 +457,15 @@
             if (nazoStep === 1 && raw === '8Q8W8JVP+34') {
                 nazoStep = 2;
                 errorMsg.classList.add('hidden');
-                document.getElementById('nazo-step1-ok').classList.remove('hidden');
+                const step1Msg = document.getElementById('nazo-step1-ok');
+                step1Msg.classList.remove('hidden');
+                step1Msg.after(document.getElementById('answer-form')); // 入力欄をメッセージの下へ移動
                 document.getElementById('answer-label').textContent = '場所の名前を入力';
                 inputEl.value = '';
                 inputEl.placeholder = '場所の名前を入力';
                 inputEl.classList.remove('tracking-wider');
                 inputEl.focus();
+                step1Msg.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else if (nazoStep === 2 && isKaruizawa(v)) {
                 nazoStep = 3;
                 errorMsg.classList.add('hidden');
