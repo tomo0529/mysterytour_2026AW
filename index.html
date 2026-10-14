@@ -741,6 +741,7 @@
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-bold">${r.name}</p>
                             <p class="text-[11px] font-bold ${top ? 'text-white/80' : 'text-gray-500'}">${detail}</p>
+                            ${top ? '<p class="text-xs font-extrabold mt-1">🎁 QUOカード 1,000円分 獲得！</p>' : ''}
                         </div>
                         <span class="text-sm font-extrabold">${r.diff == null ? '' : '差 ' + r.diff + 'g'}</span>
                     </div>`;
