@@ -269,23 +269,36 @@
     <!-- ========================================== -->
     <!-- 幹事コントロールパネル -->
     <!-- ========================================== -->
-    <button id="admin-toggle" onclick="toggleAdminPanel()" class="fixed bottom-5 right-5 z-50 bg-autumn-text text-white text-xs font-bold px-4 py-3 rounded-full shadow-lg active:scale-95 transition-transform">
-        ⚙️ 幹事メニュー
+    <button id="admin-toggle" onclick="toggleAdminPanel()" aria-label="幹事メニュー" class="fixed bottom-4 right-4 z-50 w-9 h-9 flex items-center justify-center bg-white/70 backdrop-blur text-base rounded-full shadow-soft opacity-60 hover:opacity-100 active:scale-95 transition">
+        ⚙️
     </button>
 
-    <div id="admin-overlay" onclick="toggleAdminPanel(false)" class="hidden fixed inset-0 z-50 bg-autumn-text/30"></div>
+    <div id="admin-overlay" onclick="toggleAdminPanel(false)" class="hidden fixed inset-0 z-50 bg-autumn-text/20"></div>
 
-    <div id="admin-panel" class="hidden fade-in fixed bottom-20 right-4 left-4 sm:left-auto sm:w-80 z-50 bg-card-bg rounded-3xl shadow-soft p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+    <div id="admin-panel" class="hidden fade-in fixed bottom-16 right-4 w-60 z-50 bg-card-bg rounded-2xl shadow-soft p-3 space-y-2 max-h-[70vh] overflow-y-auto">
         <div class="flex items-center justify-between">
-            <h3 class="font-bold text-sm text-autumn-text">⚙️ 幹事メニュー</h3>
-            <button onclick="toggleAdminPanel(false)" class="text-gray-400 text-lg leading-none px-2" aria-label="閉じる">×</button>
+            <h3 class="font-bold text-xs text-autumn-text">⚙️ 幹事メニュー</h3>
+            <button onclick="toggleAdminPanel(false)" class="text-gray-400 text-base leading-none px-1" aria-label="閉じる">×</button>
         </div>
-        <p class="text-[11px] text-gray-500">表示するステージを選ぶと即座に切り替わります。</p>
-        <div id="stage-options" class="space-y-2"></div>
-        <button onclick="copyStageUrl()" class="w-full bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold text-sm py-3 rounded-2xl transition-colors active:scale-95">
-            🔗 このステージのURLをコピー
-        </button>
-        <p id="copy-msg" class="hidden text-center text-xs font-bold text-autumn-accent">コピーしました！LINEに貼り付けてください</p>
+
+        <!-- ロック画面（パスワード入力） -->
+        <div id="admin-lock" class="space-y-2">
+            <p class="text-[10px] text-gray-500">パスワードを入力してください</p>
+            <div class="flex gap-1.5">
+                <input type="password" id="admin-pass" inputmode="numeric" autocomplete="off" class="flex-1 min-w-0 bg-autumn-bg rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                <button onclick="unlockAdmin()" class="bg-autumn-text text-white text-[11px] font-bold px-3 rounded-xl active:scale-95">OK</button>
+            </div>
+            <p id="admin-pass-err" class="hidden text-[10px] font-bold text-autumn-accent">パスワードが違います</p>
+        </div>
+
+        <!-- 解除後のメニュー -->
+        <div id="admin-body" class="hidden space-y-2">
+            <div id="stage-options" class="space-y-1"></div>
+            <button onclick="copyStageUrl()" class="w-full bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold text-[11px] py-2 rounded-xl transition-colors active:scale-95">
+                🔗 このステージのURLをコピー
+            </button>
+            <p id="copy-msg" class="hidden text-center text-[10px] font-bold text-autumn-accent">コピーしました！LINEに貼り付けてください</p>
+        </div>
     </div>
 
     <script>
@@ -340,8 +353,8 @@
             wrap.innerHTML = Object.entries(stageNames).map(([num, name]) => `
                 <label class="stage-option block cursor-pointer">
                     <input type="radio" name="stage" value="${num}" class="sr-only" onchange="showStage(${num})">
-                    <span class="flex items-center gap-3 bg-autumn-bg rounded-2xl px-4 py-2.5 text-xs font-bold text-autumn-text transition-colors">
-                        <span class="w-5 text-center opacity-70">${num}</span>${name}
+                    <span class="flex items-center gap-2 bg-autumn-bg rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-autumn-text transition-colors">
+                        <span class="w-3 text-center opacity-70">${num}</span>${name}
                     </span>
                 </label>`).join('');
         }
@@ -354,6 +367,38 @@
             panel.classList.toggle('hidden', !open);
             overlay.classList.toggle('hidden', !open);
             document.getElementById('copy-msg').classList.add('hidden');
+            if (open && !adminUnlocked) setTimeout(() => document.getElementById('admin-pass').focus(), 50);
+        }
+
+        // ==========================================
+        // 幹事メニューのパスワード
+        //   ソースを覗いてもすぐ分からないよう、SHA-256ハッシュで照合しています。
+        //   変更するときは新しいパスワードのハッシュ値に差し替えてください。
+        // ==========================================
+        const ADMIN_PASS_HASH = 'e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932';
+        let adminUnlocked = false;
+
+        async function sha256(text) {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+            return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        function setAdminUnlocked() {
+            adminUnlocked = true;
+            document.getElementById('admin-lock').classList.add('hidden');
+            document.getElementById('admin-body').classList.remove('hidden');
+        }
+        async function unlockAdmin() {
+            const input = document.getElementById('admin-pass');
+            const err = document.getElementById('admin-pass-err');
+            if (await sha256(input.value.trim()) === ADMIN_PASS_HASH) {
+                err.classList.add('hidden');
+                input.value = '';
+                setAdminUnlocked();
+                try { sessionStorage.setItem('adminUnlocked', '1'); } catch (e) {}
+            } else {
+                err.classList.remove('hidden');
+                input.select();
+            }
         }
 
         // 現在ステージのURLをコピー
@@ -435,6 +480,10 @@
         // 初期化
         document.addEventListener('DOMContentLoaded', () => {
             buildStageOptions();
+            try { if (sessionStorage.getItem('adminUnlocked') === '1') setAdminUnlocked(); } catch (e) {}
+            document.getElementById('admin-pass').addEventListener('keydown', e => {
+                if (e.key === 'Enter') unlockAdmin();
+            });
             showStage(getStageFromUrl(), false);
             document.getElementById('answer-input').addEventListener('keydown', e => {
                 if (e.key === 'Enter') checkAnswer();
