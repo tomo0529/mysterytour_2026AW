@@ -164,7 +164,7 @@
 
                     <!-- 1段階目 正解メッセージ -->
                     <div id="nazo-step1-ok" class="hidden fade-in bg-autumn-bg rounded-2xl p-4 text-center space-y-1">
-                        <p class="text-xs font-bold text-autumn-accent">⭕ 8JVP+34</p>
+                        <p class="text-xs font-bold text-autumn-accent">⭕ 8Q8W8JVP+34</p>
                         <p class="text-sm font-bold text-autumn-text">正解　この文字列にあたる場所を導きましょう。</p>
                     </div>
                 </div>
@@ -387,7 +387,7 @@
         }
 
         // 謎解きの判定処理（ステージ2：2段階）
-        //   1段階目: 8JVP+34 → 「正解 この文字列にあたる場所を導きましょう。」
+        //   1段階目: 8Q8W8JVP+34 → 「正解 この文字列にあたる場所を導きましょう。」
         //   2段階目: 軽井沢   → 「お見事。本日の旅先は軽井沢です。」
         let nazoStep = 1;
         function normalizeAnswer(v) {
@@ -401,7 +401,7 @@
             const errorMsg = document.getElementById('error-msg');
             const v = normalizeAnswer(inputEl.value);
 
-            if (nazoStep === 1 && v === '8JVP+34') {
+            if (nazoStep === 1 && v === '8Q8W8JVP+34') {
                 nazoStep = 2;
                 errorMsg.classList.add('hidden');
                 document.getElementById('nazo-step1-ok').classList.remove('hidden');
