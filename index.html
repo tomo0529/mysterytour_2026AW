@@ -294,9 +294,15 @@
 
         <!-- 解除後のメニュー -->
         <div id="admin-body" class="hidden space-y-2">
+            <p id="sync-status" class="text-[10px] font-bold text-gray-400">● 同期: 未設定（この端末だけ切り替わります）</p>
             <div id="stage-options" class="space-y-1"></div>
+            <label id="preview-wrap" class="hidden flex items-center gap-1.5 text-[10px] font-bold text-gray-500 cursor-pointer">
+                <input type="checkbox" id="preview-only" onchange="onPreviewToggle()" class="accent-[#C86B40]">
+                自分の画面だけで確認（全員には反映しない）
+            </label>
+            <p id="sync-err" class="hidden text-[10px] font-bold text-autumn-accent"></p>
             <button onclick="copyStageUrl()" class="w-full bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold text-[11px] py-2 rounded-xl transition-colors active:scale-95">
-                🔗 このステージのURLをコピー
+                🔗 <span id="copy-label">このステージのURLをコピー</span>
             </button>
             <p id="copy-msg" class="hidden text-center text-[10px] font-bold text-autumn-accent">コピーしました！LINEに貼り付けてください</p>
         </div>
@@ -317,6 +323,17 @@
         };
         const DEFAULT_STAGE = 1;
         let currentStage = DEFAULT_STAGE;
+
+        // ==========================================
+        // 全員同期の設定（Firebase Realtime Database）
+        //   データベースのURLを入れると、幹事の切り替えが全員の画面に反映されます。
+        //   空欄のままなら従来どおり、この端末だけ（?stage=X 方式）で動きます。
+        //   例: 'https://mysterytour-xxxxx-default-rtdb.asia-southeast1.firebasedatabase.app'
+        // ==========================================
+        const SYNC_DB_URL = '';
+        const SYNC_ENABLED = SYNC_DB_URL !== '';
+        let lastRemoteStage = null;
+        let syncSource = null;
 
         // URLの ?stage=X から初期ステージを決定
         function getStageFromUrl() {
@@ -340,7 +357,7 @@
             const radio = document.querySelector('input[name="stage"][value="' + n + '"]');
             if (radio) radio.checked = true;
 
-            if (updateUrl) {
+            if (updateUrl && !SYNC_ENABLED) {
                 const url = new URL(location.href);
                 url.searchParams.set('stage', n);
                 history.replaceState(null, '', url);
@@ -348,12 +365,75 @@
             window.scrollTo({ top: 0 });
         }
 
+        // ---------- 全員同期 ----------
+        function isPreviewOnly() {
+            return document.getElementById('preview-only').checked;
+        }
+        function setSyncStatus(text, ok) {
+            const el = document.getElementById('sync-status');
+            el.textContent = '● ' + text;
+            el.className = 'text-[10px] font-bold ' + (ok ? 'text-green-600' : 'text-gray-400');
+        }
+        // 共有ステージを受け取ったときの処理（変化したときだけ画面を切り替える）
+        function applyRemoteStage(n) {
+            n = parseInt(n, 10);
+            if (!stageNames[n]) return;
+            lastRemoteStage = n;
+            if (isPreviewOnly()) return;
+            if (n !== currentStage) showStage(n);
+        }
+        // Firebase の変更をリアルタイムで受信（EventSource）
+        function startSync() {
+            if (syncSource) syncSource.close();
+            syncSource = new EventSource(SYNC_DB_URL + '/tour/stage.json');
+            syncSource.addEventListener('put', e => {
+                setSyncStatus('同期: 接続中（全員に反映されます）', true);
+                const d = JSON.parse(e.data);
+                if (d && d.path === '/') applyRemoteStage(d.data);
+            });
+            syncSource.addEventListener('open', () => setSyncStatus('同期: 接続中（全員に反映されます）', true));
+            syncSource.addEventListener('error', () => setSyncStatus('同期: 再接続中…', false));
+            syncSource.addEventListener('cancel', () => setSyncStatus('同期: 読み取り権限がありません', false));
+        }
+        // スマホでアプリを切り替えて戻ってきたとき、最新のステージを取り直す
+        async function refreshSync() {
+            try {
+                const res = await fetch(SYNC_DB_URL + '/tour/stage.json', { cache: 'no-store' });
+                if (res.ok) applyRemoteStage(await res.json());
+            } catch (e) {}
+            if (!syncSource || syncSource.readyState === 2) startSync();
+        }
+        // 幹事がステージを全員に送信
+        async function publishStage(n) {
+            const err = document.getElementById('sync-err');
+            err.classList.add('hidden');
+            try {
+                const res = await fetch(SYNC_DB_URL + '/tour.json', {
+                    method: 'PUT',
+                    body: JSON.stringify({ stage: n, key: adminPass })
+                });
+                if (!res.ok) throw new Error(res.status);
+            } catch (e) {
+                err.textContent = '全員への反映に失敗しました（通信状況を確認して再度選んでください）';
+                err.classList.remove('hidden');
+            }
+        }
+        // 幹事メニューでステージを選んだとき
+        function selectStage(n) {
+            showStage(n);
+            if (SYNC_ENABLED && !isPreviewOnly()) publishStage(n);
+        }
+        // 「自分の画面だけで確認」を外したら、全員の現在ステージに戻る
+        function onPreviewToggle() {
+            if (!isPreviewOnly() && lastRemoteStage) showStage(lastRemoteStage);
+        }
+
         // 幹事メニューのラジオボタンを生成
         function buildStageOptions() {
             const wrap = document.getElementById('stage-options');
             wrap.innerHTML = Object.entries(stageNames).map(([num, name]) => `
                 <label class="stage-option block cursor-pointer">
-                    <input type="radio" name="stage" value="${num}" class="sr-only" onchange="showStage(${num})">
+                    <input type="radio" name="stage" value="${num}" class="sr-only" onchange="selectStage(${num})">
                     <span class="flex items-center gap-2 bg-autumn-bg rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-autumn-text transition-colors">
                         <span class="w-3 text-center opacity-70">${num}</span>${name}
                     </span>
@@ -378,6 +458,7 @@
         // ==========================================
         const ADMIN_PASS_HASH = '5b10564b32ea564df50f0c56353b0b4ed3821fb86fc4555a4aa2461e76d07473';
         let adminUnlocked = false;
+        let adminPass = '';
 
         async function sha256(text) {
             const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -393,9 +474,10 @@
             const err = document.getElementById('admin-pass-err');
             if (await sha256(input.value.trim()) === ADMIN_PASS_HASH) {
                 err.classList.add('hidden');
+                adminPass = input.value.trim();
                 input.value = '';
                 setAdminUnlocked();
-                try { sessionStorage.setItem('adminUnlocked', '1'); } catch (e) {}
+                try { sessionStorage.setItem('adminPass', adminPass); } catch (e) {}
             } else {
                 err.classList.remove('hidden');
                 input.select();
@@ -405,8 +487,9 @@
         // 現在ステージのURLをコピー
         function copyStageUrl() {
             const url = new URL(location.href);
-            url.searchParams.set('stage', currentStage);
             url.hash = '';
+            if (SYNC_ENABLED) url.search = '';           // 同期中は共通URLのみ
+            else url.searchParams.set('stage', currentStage);
             const text = url.toString();
             const done = () => {
                 const msg = document.getElementById('copy-msg');
@@ -484,11 +567,25 @@
         // 初期化
         document.addEventListener('DOMContentLoaded', () => {
             buildStageOptions();
-            try { if (sessionStorage.getItem('adminUnlocked') === '1') setAdminUnlocked(); } catch (e) {}
+            try {
+                const saved = sessionStorage.getItem('adminPass');
+                if (saved) sha256(saved).then(h => { if (h === ADMIN_PASS_HASH) { adminPass = saved; setAdminUnlocked(); } });
+            } catch (e) {}
             document.getElementById('admin-pass').addEventListener('keydown', e => {
                 if (e.key === 'Enter') unlockAdmin();
             });
-            showStage(getStageFromUrl(), false);
+            if (SYNC_ENABLED) {
+                showStage(DEFAULT_STAGE, false);
+                document.getElementById('preview-wrap').classList.remove('hidden');
+                document.getElementById('copy-label').textContent = '共通URLをコピー';
+                setSyncStatus('同期: 接続中…', false);
+                startSync();
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') refreshSync();
+                });
+            } else {
+                showStage(getStageFromUrl(), false);
+            }
             document.getElementById('answer-input').addEventListener('keydown', e => {
                 if (e.key === 'Enter') checkAnswer();
             });
