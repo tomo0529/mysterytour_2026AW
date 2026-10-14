@@ -206,15 +206,49 @@
             <!-- ステージ4：松井農園 りんご狩り -->
             <!-- ========================================== -->
             <section id="stage-4" class="stage space-y-6 hidden">
-                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
+                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-5">
                     <div>
                         <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">MISSION 3</span>
                         <h3 class="text-lg font-bold text-autumn-text">松井農園 りんご狩り</h3>
                     </div>
-                    <div class="bg-autumn-bg rounded-2xl p-5 text-center">
-                        <p class="text-3xl mb-2">🍎</p>
-                        <p class="text-xs text-gray-500 font-bold">このステージの内容は準備中です</p>
+                    <div class="bg-autumn-bg rounded-2xl p-5 text-center space-y-2 text-sm font-bold text-autumn-text leading-relaxed">
+                        <p class="text-3xl">🍎</p>
+                        <p>自分で選んだりんご1個の重さを予想せよ。</p>
+                        <p class="text-autumn-accent">実際の重さに一番近い者が勝者だ！</p>
                     </div>
+
+                    <!-- 予想入力（発表前） -->
+                    <div id="apple-entry" class="space-y-3">
+                        <div class="space-y-1">
+                            <label for="apple-name" class="text-xs font-bold text-gray-500 pl-1">自分の名前を選択</label>
+                            <select id="apple-name" onchange="onAppleNameChange()" class="w-full bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent appearance-none"></select>
+                        </div>
+                        <div class="space-y-1">
+                            <label for="apple-guess" class="text-xs font-bold text-gray-500 pl-1">予想グラムを入力</label>
+                            <div class="flex space-x-2">
+                                <div class="relative flex-1 min-w-0">
+                                    <input type="number" id="apple-guess" inputmode="numeric" min="1" max="1999" step="1" placeholder="例: 300" class="w-full bg-autumn-bg rounded-2xl pl-4 pr-10 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent placeholder-gray-400">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">g</span>
+                                </div>
+                                <button id="apple-submit" onclick="submitAppleGuess()" class="bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold px-5 py-3 rounded-2xl transition-colors shadow-sm active:scale-95">宣言する</button>
+                            </div>
+                        </div>
+                        <p id="apple-msg" class="hidden text-xs font-bold text-center"></p>
+                        <div class="pt-1">
+                            <p class="text-[11px] font-bold text-gray-500 mb-2 pl-1">宣言済み（発表まで変更できます）</p>
+                            <div id="apple-status" class="flex flex-wrap gap-1.5"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 結果発表 -->
+                <div id="apple-result" class="hidden fade-in bg-card-bg rounded-3xl p-6 shadow-soft space-y-4 border-2 border-autumn-accent/20">
+                    <div class="flex justify-between items-start">
+                        <span class="inline-block px-3 py-1 bg-autumn-accent/10 text-autumn-accent font-bold text-xs rounded-full">RESULT</span>
+                        <span class="text-2xl">🏆</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-autumn-text">結果発表</h3>
+                    <div id="apple-ranking" class="space-y-2"></div>
                 </div>
             </section>
 
@@ -304,6 +338,21 @@
                 自分の画面だけで確認（全員には反映しない）
             </label>
             <p id="sync-err" class="hidden text-[10px] font-bold text-autumn-accent"></p>
+            <details id="apple-admin" class="bg-autumn-bg rounded-xl px-2.5 py-2">
+                <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🍎 りんご計測（M3）</summary>
+                <div class="pt-2 space-y-1.5">
+                    <div id="apple-admin-rows" class="space-y-1"></div>
+                    <p id="apple-admin-msg" class="hidden text-[10px] font-bold"></p>
+                    <div class="flex gap-1.5 pt-1">
+                        <button onclick="saveAppleResult(false)" class="flex-1 bg-white text-autumn-text text-[10px] font-bold py-1.5 rounded-lg active:scale-95">実測を保存</button>
+                        <button onclick="saveAppleResult(true)" class="flex-1 bg-autumn-accent text-white text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表する</button>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="saveAppleResult(false, true)" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表を取り消す</button>
+                        <button onclick="resetApple()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">全リセット</button>
+                    </div>
+                </div>
+            </details>
             <button onclick="copyStageUrl()" class="w-full bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold text-[11px] py-2 rounded-xl transition-colors active:scale-95">
                 🔗 <span id="copy-label">このステージのURLをコピー</span>
             </button>
@@ -518,6 +567,240 @@
             document.body.removeChild(ta);
         }
 
+        // ==========================================
+        // MISSION 3：りんご重さ当て
+        //   参加者は名前を選んで予想グラムを宣言 → 幹事が実測値を入力して発表
+        //   データは Firebase の /apple に保存（全員の画面にリアルタイム反映）
+        // ==========================================
+        const APPLE_PLAYERS = [
+            { id: 'seseri', name: 'せせり' },
+            { id: 'masato', name: 'まさと' },
+            { id: 'jiei',   name: 'じえい' },
+            { id: 'tomo',   name: 'とも' },
+            { id: 'miya',   name: 'みや' }
+        ];
+        let appleGuesses = {};    // { id: グラム }
+        let appleActual = {};     // { id: グラム }
+        let appleRevealed = false;
+        const appleSources = [];
+
+        // Firebase のストリームイベントを手元のデータに反映する
+        function fbApply(root, path, data, isPatch) {
+            const keys = path.split('/').filter(Boolean);
+            const merge = (base, d) => {
+                const o = Object.assign({}, (base && typeof base === 'object') ? base : {}, d);
+                Object.keys(o).forEach(k => { if (o[k] === null) delete o[k]; });
+                return o;
+            };
+            if (!keys.length) return isPatch ? merge(root, data) : data;
+            root = (root && typeof root === 'object') ? Object.assign({}, root) : {};
+            let o = root;
+            keys.slice(0, -1).forEach(k => {
+                o[k] = (o[k] && typeof o[k] === 'object') ? Object.assign({}, o[k]) : {};
+                o = o[k];
+            });
+            const last = keys[keys.length - 1];
+            if (isPatch) o[last] = merge(o[last], data);
+            else if (data === null) delete o[last];
+            else o[last] = data;
+            return root;
+        }
+        function fbSubscribe(path, onValue) {
+            let value = null;
+            const es = new EventSource(SYNC_DB_URL + path + '.json');
+            const handle = isPatch => e => {
+                const d = JSON.parse(e.data);
+                if (!d) return;
+                value = fbApply(value, d.path, d.data, isPatch);
+                onValue(value);
+            };
+            es.addEventListener('put', handle(false));
+            es.addEventListener('patch', handle(true));
+            es.refetch = async () => {
+                try {
+                    const res = await fetch(SYNC_DB_URL + path + '.json', { cache: 'no-store' });
+                    if (res.ok) { value = await res.json(); onValue(value); }
+                } catch (e) {}
+            };
+            return es;
+        }
+        function startAppleSync() {
+            appleSources.push(fbSubscribe('/apple/guesses', v => { appleGuesses = v || {}; renderApple(); renderAppleAdmin(false); }));
+            appleSources.push(fbSubscribe('/apple/result/actual', v => { appleActual = v || {}; renderApple(); renderAppleAdmin(true); }));
+            appleSources.push(fbSubscribe('/apple/result/revealed', v => { appleRevealed = v === true; renderApple(); }));
+        }
+        function refreshAppleSync() {
+            appleSources.forEach(es => es.refetch());
+        }
+
+        function appleName(id) {
+            const p = APPLE_PLAYERS.find(p => p.id === id);
+            return p ? p.name : id;
+        }
+        function showAppleMsg(text, ok) {
+            const el = document.getElementById('apple-msg');
+            el.textContent = text;
+            el.className = 'text-xs font-bold text-center ' + (ok ? 'text-green-600' : 'text-autumn-accent');
+        }
+
+        // 名前の選択肢を作る（スマホではスクロール式で選べる）
+        function buildApplePlayers() {
+            const sel = document.getElementById('apple-name');
+            sel.innerHTML = '<option value="">▼ 名前を選ぶ</option>' +
+                APPLE_PLAYERS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            try {
+                const saved = localStorage.getItem('appleMe');
+                if (saved && APPLE_PLAYERS.some(p => p.id === saved)) sel.value = saved;
+            } catch (e) {}
+            onAppleNameChange();
+        }
+        function onAppleNameChange() {
+            const id = document.getElementById('apple-name').value;
+            try { if (id) localStorage.setItem('appleMe', id); } catch (e) {}
+            const input = document.getElementById('apple-guess');
+            if (id && appleGuesses[id] != null) {
+                input.value = appleGuesses[id];
+                showAppleMsg(`${appleName(id)}さんの宣言：${appleGuesses[id]}g`, true);
+            } else {
+                input.value = '';
+                document.getElementById('apple-msg').className = 'hidden';
+            }
+        }
+
+        async function submitAppleGuess() {
+            const id = document.getElementById('apple-name').value;
+            const raw = document.getElementById('apple-guess').value
+                .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+            const g = parseInt(raw, 10);
+            if (!id) return showAppleMsg('まず自分の名前を選んでください', false);
+            if (!(g >= 1 && g <= 1999)) return showAppleMsg('1〜1999gの数字で入力してください', false);
+            if (appleRevealed) return showAppleMsg('結果発表済みのため変更できません', false);
+            if (!SYNC_ENABLED) return showAppleMsg('同期が未設定のため送信できません', false);
+            const btn = document.getElementById('apple-submit');
+            btn.disabled = true;
+            try {
+                const res = await fetch(SYNC_DB_URL + '/apple/guesses/' + id + '.json', { method: 'PUT', body: JSON.stringify(g) });
+                if (!res.ok) throw new Error(res.status);
+                appleGuesses = Object.assign({}, appleGuesses, { [id]: g });
+                renderApple();
+                showAppleMsg(`${appleName(id)}さん、${g}gで宣言しました！`, true);
+            } catch (e) {
+                showAppleMsg('送信に失敗しました。電波を確認してもう一度どうぞ', false);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // 参加者側の表示（宣言状況 / 結果ランキング）
+        function renderApple() {
+            // 宣言済みバッジ（予想値は発表まで伏せる）
+            document.getElementById('apple-status').innerHTML = APPLE_PLAYERS.map(p => {
+                const done = appleGuesses[p.id] != null;
+                return `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${done ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-gray-400'}">${done ? '✓ ' : ''}${p.name}</span>`;
+            }).join('');
+
+            // 自分の宣言が後から届いたら入力欄に反映
+            const me = document.getElementById('apple-name').value;
+            const guessInput = document.getElementById('apple-guess');
+            if (me && appleGuesses[me] != null && guessInput.value === '' && document.activeElement !== guessInput) {
+                onAppleNameChange();
+            }
+
+            document.getElementById('apple-entry').classList.toggle('hidden', appleRevealed);
+            document.getElementById('apple-result').classList.toggle('hidden', !appleRevealed);
+            if (!appleRevealed) return;
+
+            // 差が小さい順に並べる（同じ差は同順位）。未宣言・未計測は最後
+            const rows = APPLE_PLAYERS.map(p => {
+                const g = appleGuesses[p.id], a = appleActual[p.id];
+                const diff = (g != null && a != null) ? Math.abs(g - a) : null;
+                return { ...p, g, a, diff };
+            }).sort((x, y) => (x.diff ?? Infinity) - (y.diff ?? Infinity));
+            let rank = 0, prev = null;
+            document.getElementById('apple-ranking').innerHTML = rows.map((r, i) => {
+                if (r.diff !== prev) { rank = i + 1; prev = r.diff; }
+                const top = r.diff != null && rank === 1;
+                const medal = r.diff == null ? '－' : (['🥇', '🥈', '🥉'][rank - 1] || rank + '位');
+                const detail = r.diff == null
+                    ? `<span class="text-gray-400">${r.g == null ? '未宣言' : '未計測'}</span>`
+                    : `予想 ${r.g}g ／ 実測 ${r.a}g`;
+                return `
+                    <div class="flex items-center gap-3 rounded-2xl px-4 py-3 ${top ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-autumn-text'}">
+                        <span class="w-8 text-center text-lg font-extrabold">${medal}</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-bold">${r.name}</p>
+                            <p class="text-[11px] font-bold ${top ? 'text-white/80' : 'text-gray-500'}">${detail}</p>
+                        </div>
+                        <span class="text-sm font-extrabold">${r.diff == null ? '' : '差 ' + r.diff + 'g'}</span>
+                    </div>`;
+            }).join('');
+        }
+
+        // ---------- 幹事：実測の入力と発表 ----------
+        function renderAppleAdmin(fillActual) {
+            const wrap = document.getElementById('apple-admin-rows');
+            if (!wrap.children.length) {
+                wrap.innerHTML = APPLE_PLAYERS.map(p => `
+                    <div class="flex items-center gap-1.5 text-[11px] font-bold text-autumn-text">
+                        <span class="w-12 shrink-0">${p.name}</span>
+                        <span id="apple-admin-guess-${p.id}" class="w-14 shrink-0 text-gray-400">予想 －</span>
+                        <input type="number" inputmode="numeric" id="apple-admin-actual-${p.id}" placeholder="実測" class="flex-1 min-w-0 bg-white rounded-lg px-2 py-1 text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                        <span class="text-gray-400">g</span>
+                    </div>`).join('');
+                fillActual = true;
+            }
+            APPLE_PLAYERS.forEach(p => {
+                const g = appleGuesses[p.id];
+                document.getElementById('apple-admin-guess-' + p.id).textContent = g != null ? `予想 ${g}` : '予想 －';
+                const input = document.getElementById('apple-admin-actual-' + p.id);
+                if (fillActual && document.activeElement !== input) input.value = appleActual[p.id] ?? '';
+            });
+        }
+        function showAppleAdminMsg(text, ok) {
+            const el = document.getElementById('apple-admin-msg');
+            el.textContent = text;
+            el.className = 'text-[10px] font-bold ' + (ok ? 'text-green-600' : 'text-autumn-accent');
+        }
+        async function saveAppleResult(reveal, unreveal = false) {
+            const actual = {};
+            for (const p of APPLE_PLAYERS) {
+                const v = document.getElementById('apple-admin-actual-' + p.id).value.trim();
+                if (v === '') continue;
+                const n = parseInt(v, 10);
+                if (!(n >= 0 && n <= 1999)) return showAppleAdminMsg(`${p.name}の実測値を確認してください`, false);
+                actual[p.id] = n;
+            }
+            if (reveal && Object.keys(actual).length < APPLE_PLAYERS.length &&
+                !confirm('実測が入っていない人がいます。このまま発表しますか？')) return;
+            const revealed = unreveal ? false : (reveal ? true : appleRevealed);
+            try {
+                const res = await fetch(SYNC_DB_URL + '/apple/result.json', {
+                    method: 'PUT',
+                    body: JSON.stringify({ key: adminPass, revealed, actual })
+                });
+                if (!res.ok) throw new Error(res.status);
+                showAppleAdminMsg(unreveal ? '発表を取り消しました' : reveal ? '全員の画面に結果を発表しました！' : '実測を保存しました（未発表）', true);
+            } catch (e) {
+                showAppleAdminMsg('保存に失敗しました', false);
+            }
+        }
+        async function resetApple() {
+            if (!confirm('予想と実測をすべて消去します。よろしいですか？')) return;
+            try {
+                // 先に発表状態を解除（発表中は予想の書き換えができないため）
+                let res = await fetch(SYNC_DB_URL + '/apple/result.json', {
+                    method: 'PUT', body: JSON.stringify({ key: adminPass, revealed: false, actual: {} })
+                });
+                if (!res.ok) throw new Error(res.status);
+                await Promise.all(APPLE_PLAYERS.map(p =>
+                    fetch(SYNC_DB_URL + '/apple/guesses/' + p.id + '.json', { method: 'DELETE' })));
+                APPLE_PLAYERS.forEach(p => document.getElementById('apple-admin-actual-' + p.id).value = '');
+                showAppleAdminMsg('リセットしました', true);
+            } catch (e) {
+                showAppleAdminMsg('リセットに失敗しました', false);
+            }
+        }
+
         // 謎解きの判定処理（ステージ2：2段階）
         //   1段階目: 8Q8W8JVP+34 → 「住所ではない。…さて、どこへたどり着く？」
         //   2段階目: 軽井沢   → 「お見事。本日の旅先は軽井沢です。」
@@ -570,6 +853,9 @@
         // 初期化
         document.addEventListener('DOMContentLoaded', () => {
             buildStageOptions();
+            buildApplePlayers();
+            renderApple();
+            renderAppleAdmin(true);
             try {
                 const saved = sessionStorage.getItem('adminPass');
                 if (saved) sha256(saved).then(h => { if (h === ADMIN_PASS_HASH) { adminPass = saved; setAdminUnlocked(); } });
@@ -583,8 +869,9 @@
                 document.getElementById('copy-label').textContent = '共通URLをコピー';
                 setSyncStatus('同期: 接続中…', false);
                 startSync();
+                startAppleSync();
                 document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible') refreshSync();
+                    if (document.visibilityState === 'visible') { refreshSync(); refreshAppleSync(); }
                 });
             } else {
                 showStage(getStageFromUrl(), false);
