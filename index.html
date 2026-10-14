@@ -46,19 +46,6 @@
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* タイムラインの線と丸 */
-        .timeline-line::before {
-            content: '';
-            position: absolute;
-            left: 11px;
-            top: 24px;
-            bottom: -24px;
-            width: 2px;
-            background-color: #F5F3ED;
-        }
-        .timeline-item:last-child .timeline-line::before {
-            display: none;
-        }
         /* 幹事メニューのラジオ選択状態 */
         .stage-option input:checked + span {
             background-color: #C86B40;
@@ -75,16 +62,11 @@
             <span class="text-xl">🍁</span>
             <h1 class="font-bold text-sm tracking-widest text-autumn-text">秋のミステリーツアー</h1>
         </div>
-        <!-- ステージ2以降で表示されるタブナビゲーション -->
-        <div id="nav-tabs" class="flex space-x-2 hidden">
-            <button onclick="switchTab('mission')" id="tab-mission" class="px-4 py-1.5 text-xs font-bold rounded-full bg-autumn-accent text-white transition-colors">ミッション</button>
-            <button onclick="switchTab('itinerary')" id="tab-itinerary" class="px-4 py-1.5 text-xs font-bold rounded-full text-autumn-text bg-white shadow-soft transition-colors hover:bg-gray-50">旅のしおり</button>
-        </div>
     </header>
 
     <main class="flex-1 w-full max-w-md mx-auto p-5 flex flex-col space-y-6">
 
-        <!-- ▼ ミッション（ステージ）表示エリア ▼ -->
+        <!-- ▼ ステージ表示エリア ▼ -->
         <div id="mission-tab-content" class="space-y-6">
 
             <!-- ========================================== -->
@@ -282,84 +264,6 @@
 
         </div>
 
-        <!-- ▼ 旅のしおり（ステージ2以降でタブから表示） ▼ -->
-        <div id="itinerary-tab-content" class="hidden fade-in space-y-6">
-
-            <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-6">
-                <!-- 1日目 -->
-                <div>
-                    <h4 class="font-bold text-lg text-autumn-text mb-4 border-b-2 border-autumn-bg pb-2">1日目：10月24日(土)</h4>
-                    <div class="space-y-0 text-sm relative">
-                        <div class="timeline-item relative pl-8 pb-6">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-autumn-accent"></div>
-                            <p class="font-bold text-autumn-accent">10:00</p>
-                            <p class="font-bold text-autumn-text mt-1">松戸 出発</p>
-                        </div>
-                        <div class="timeline-item relative pl-8 pb-6">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300"></div>
-                            <p class="font-bold text-autumn-accent">11:00</p>
-                            <p class="font-bold text-autumn-text mt-1">三芳PA (下り)</p>
-                        </div>
-                        <div class="timeline-item relative pl-8 pb-6">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300"></div>
-                            <p class="font-bold text-autumn-accent">13:00</p>
-                            <p class="font-bold text-autumn-text mt-1">旧軽井沢 ランチ＆散策</p>
-                        </div>
-                        <div class="timeline-item relative pl-8 pb-6">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300"></div>
-                            <p class="font-bold text-autumn-accent">14:45</p>
-                            <p class="font-bold text-autumn-text mt-1">松井農園 (りんご狩り)</p>
-                        </div>
-                        <div class="timeline-item relative pl-8 pb-6">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300"></div>
-                            <p class="font-bold text-autumn-accent">16:30</p>
-                            <p class="font-bold text-autumn-text mt-1">白糸の滝 (夕暮れ散策)</p>
-                        </div>
-                        <div class="timeline-item relative pl-8 pb-6">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300"></div>
-                            <p class="font-bold text-autumn-accent">17:30</p>
-                            <p class="font-bold text-autumn-text mt-1">ツルヤ 軽井沢店 (買い出し)</p>
-                        </div>
-                        <div class="timeline-item relative pl-8">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300"></div>
-                            <p class="font-bold text-autumn-accent">18:40</p>
-                            <p class="font-bold text-autumn-text mt-1">秘密のアジト到着</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-6">
-                <!-- 2日目 -->
-                <div>
-                    <h4 class="font-bold text-lg text-autumn-text mb-4 border-b-2 border-autumn-bg pb-2">2日目：10月25日(日)</h4>
-                    <div class="space-y-0 text-sm relative">
-                        <div class="timeline-item relative pl-8 pb-6">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300"></div>
-                            <p class="font-bold text-autumn-accent">10:00</p>
-                            <p class="font-bold text-autumn-text mt-1">アジト 出発</p>
-                        </div>
-                        <div class="timeline-item relative pl-8 pb-6">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300"></div>
-                            <p class="font-bold text-autumn-accent">10:45</p>
-                            <p class="font-bold text-autumn-text mt-1">アミーチアドベンチャー軽井沢</p>
-                        </div>
-                        <div class="timeline-item relative pl-8 pb-6">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300"></div>
-                            <p class="font-bold text-autumn-accent">13:30</p>
-                            <p class="font-bold text-autumn-text mt-1">軽井沢ランチ</p>
-                        </div>
-                        <div class="timeline-item relative pl-8">
-                            <div class="timeline-line absolute left-0 top-1 w-6 h-6 rounded-full bg-autumn-bg border-2 border-gray-300"></div>
-                            <p class="font-bold text-autumn-accent">19:30頃</p>
-                            <p class="font-bold text-autumn-text mt-1">松戸 帰着・解散</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
     </main>
 
     <!-- ========================================== -->
@@ -417,10 +321,6 @@
             target.classList.remove('fade-in');
             void target.offsetWidth; // アニメーションを再生し直す
             target.classList.add('fade-in');
-
-            // ステージ1（事前案内）ではタブを隠す
-            document.getElementById('nav-tabs').classList.toggle('hidden', n === 1);
-            switchTab('mission');
 
             // 幹事メニューのラジオを同期
             const radio = document.querySelector('input[name="stage"][value="' + n + '"]');
@@ -484,23 +384,6 @@
             try { document.execCommand('copy'); done(); }
             catch (e) { prompt('このURLをコピーしてください', text); }
             document.body.removeChild(ta);
-        }
-
-        // タブ切り替え処理（ミッション / 旅のしおり）
-        function switchTab(tabName) {
-            const missionTab = document.getElementById('mission-tab-content');
-            const itineraryTab = document.getElementById('itinerary-tab-content');
-            const btnMission = document.getElementById('tab-mission');
-            const btnItinerary = document.getElementById('tab-itinerary');
-
-            const activeClass = "px-4 py-1.5 text-xs font-bold rounded-full bg-autumn-accent text-white transition-colors";
-            const inactiveClass = "px-4 py-1.5 text-xs font-bold rounded-full text-autumn-text bg-white shadow-soft transition-colors hover:bg-gray-50";
-
-            const isMission = tabName === 'mission';
-            missionTab.classList.toggle('hidden', !isMission);
-            itineraryTab.classList.toggle('hidden', isMission);
-            btnMission.className = isMission ? activeClass : inactiveClass;
-            btnItinerary.className = isMission ? inactiveClass : activeClass;
         }
 
         // 謎解きの判定処理（ステージ2：2段階）
