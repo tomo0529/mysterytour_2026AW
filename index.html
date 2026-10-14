@@ -322,54 +322,32 @@
                         <p class="text-xs font-bold text-autumn-text leading-relaxed">高いところが苦手な人、体調に不安がある人は、無理せずこっそり幹事に教えてね。当日の体調の変化も遠慮なく！</p>
                     </div>
 
-                    <!-- 利用規約・注意事項 -->
-                    <details class="bg-autumn-bg rounded-2xl px-4 py-3 group">
-                        <summary class="text-sm font-bold text-autumn-text cursor-pointer">📋 参加前に必ず確認（施設の利用規約・注意事項）</summary>
-                        <div class="pt-3 space-y-3 text-xs text-autumn-text leading-relaxed">
-                            <div>
-                                <p class="font-bold text-autumn-accent mb-1">参加条件</p>
-                                <ul class="list-disc pl-5 space-y-0.5">
-                                    <li>体重120kgまで</li>
-                                    <li>ハーネスが体に合わない場合は参加できないことがあります</li>
-                                    <li>安全講習の受講が必須。スタッフの説明を理解し、指示に従えること</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <p class="font-bold text-autumn-accent mb-1">参加できない人</p>
-                                <ul class="list-disc pl-5 space-y-0.5">
-                                    <li>お酒を飲んでいる人（前夜の飲みすぎにも注意！）</li>
-                                    <li>体調不良の人</li>
-                                    <li>妊娠中の人、心疾患のある人、首や背中に障害のある人</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <p class="font-bold text-autumn-accent mb-1">服装・持ち物</p>
-                                <ul class="list-disc pl-5 space-y-0.5">
-                                    <li>動きやすく、汚れてもいい服装で</li>
-                                    <li>サンダル・ハイヒール・マフラー・コートは不可（スニーカー必須）</li>
-                                    <li>財布やスマホはポケットに入れず、無料ロッカーへ</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <p class="font-bold text-autumn-accent mb-1">コース中のルール</p>
-                                <ul class="list-disc pl-5 space-y-0.5">
-                                    <li>器具の装着・取り外しはスタッフが行い、途中で自分では外せません</li>
-                                    <li>ハーネス装着中はトイレに行けないので、事前に済ませておこう</li>
-                                    <li>装着中の飲食・喫煙は不可（水分補給はOK）</li>
-                                    <li>雷や大雨のときはコースがクローズすることがあります</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <p class="font-bold text-autumn-accent mb-1">その他</p>
-                                <ul class="list-disc pl-5 space-y-0.5">
-                                    <li>参加は自己責任。体に負荷がかかることを理解したうえで参加すること</li>
-                                    <li>途中で中止になった場合も返金はありません</li>
-                                </ul>
-                            </div>
-                            <p class="text-[11px] text-gray-500">※施設の公式情報をもとにした要約です。正式な内容は
-                                <a href="https://www.rising-field.com/owl-adventure" target="_blank" rel="noopener" class="underline text-autumn-accent">公式サイト</a>をご確認ください。</p>
+                    <!-- 利用規約（施設の参加同意事項） -->
+                    <div class="bg-autumn-bg rounded-2xl p-4 space-y-3">
+                        <p class="text-sm font-bold text-autumn-text">📋 施設の利用規約（必ず読んでね）</p>
+                        <ol class="list-decimal pl-5 space-y-2 text-xs text-autumn-text leading-relaxed">
+                                <li>私達は、アウルアドベンチャーが身体的・感情的に負荷がかかる可能性がある事を理解しました。</li>
+                                <li>私達は、OWLが傷害または事故のリスクがあることを理解しました。</li>
+                                <li>私達は、スタッフからの安全に関する注意事項について指示に従います。その限りでない場合に生じた身体的・感情的損害・障害については責任を問いません。</li>
+                                <li>私達は、健康であり、以下の疫病に関し、医師などにより治療中ではありません。<br>①首・背中・足腰の障害　②心臓の障害　③その他体調不良</li>
+                                <li>私達は、スタッフが必要を認めた場合、スタッフの選択する医療機関への搬送、応急処置、治療に従います。</li>
+                                <li>私達は、活動中に発生した衣類や履物の落下や汚損、装飾品や携行品の落下や破損・紛失などについて、施設側に責任を問いません。</li>
+                                <li>忘れ物や落とし物に関して、当施設では以下の対応をさせていただいております。<br>①忘れ物、落とし物については一定期間、事務所にて保管いたします。<br>②保管期間は1か月を限度とさせていただきます。<br>③1か月を過ぎてもご連絡がない場合は、処分させていただきますので、ご了承くださいますようお願い申し上げます。</li>
+                                <li>当日の人数変更、キャンセルはキャンセル料がかかります。人数変更、キャンセルは前日までにご連絡をお願いします。</li>
+                        </ol>
+                        <p class="text-xs font-bold text-autumn-accent">私達は、上記内容に同意し、アウルアドベンチャーに参加します。</p>
+                    </div>
+
+                    <!-- 規約の確認チェック -->
+                    <div class="space-y-2">
+                        <label for="terms-name" class="text-xs font-bold text-gray-500 pl-1">自分の名前を選んで「確認しました」を押してね</label>
+                        <div class="flex space-x-2">
+                            <select id="terms-name" onchange="onTermsNameChange()" class="flex-1 min-w-0 bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent appearance-none"></select>
+                            <button id="terms-btn" onclick="toggleTermsAgree()" class="bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold px-4 py-3 rounded-2xl transition-colors shadow-sm active:scale-95 whitespace-nowrap">確認しました</button>
                         </div>
-                    </details>
+                        <p id="terms-msg" class="hidden text-xs font-bold text-center"></p>
+                        <div id="terms-status" class="flex flex-wrap gap-1.5 pt-1"></div>
+                    </div>
                 </div>
             </section>
 
@@ -718,6 +696,7 @@
             appleSources.push(fbSubscribe('/apple/guesses', v => { appleGuesses = v || {}; renderApple(); renderAppleAdmin(false); }));
             appleSources.push(fbSubscribe('/apple/result/actual', v => { appleActual = v || {}; renderApple(); renderAppleAdmin(true); }));
             appleSources.push(fbSubscribe('/apple/result/revealed', v => { appleRevealed = v === true; renderApple(); }));
+            appleSources.push(fbSubscribe('/terms', v => { termsAgreed = v || {}; renderTerms(); }));
         }
         function refreshAppleSync() {
             appleSources.forEach(es => es.refetch());
@@ -892,6 +871,60 @@
             }
         }
 
+        // ==========================================
+        // M6：利用規約の「確認しました」チェック（Firebase /terms に保存）
+        // ==========================================
+        let termsAgreed = {};   // { id: true }
+        function buildTermsPlayers() {
+            const sel = document.getElementById('terms-name');
+            sel.innerHTML = '<option value="">▼ 名前を選ぶ</option>' +
+                APPLE_PLAYERS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            try {
+                const saved = localStorage.getItem('appleMe');
+                if (saved && APPLE_PLAYERS.some(p => p.id === saved)) sel.value = saved;
+            } catch (e) {}
+            renderTerms();
+        }
+        function onTermsNameChange() {
+            const id = document.getElementById('terms-name').value;
+            try { if (id) localStorage.setItem('appleMe', id); } catch (e) {}
+            document.getElementById('terms-msg').className = 'hidden';
+            renderTerms();
+        }
+        function renderTerms() {
+            document.getElementById('terms-status').innerHTML = APPLE_PLAYERS.map(p => {
+                const ok = termsAgreed[p.id] === true;
+                return `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${ok ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-gray-400'}">${ok ? '✓ ' : ''}${p.name}</span>`;
+            }).join('');
+            const id = document.getElementById('terms-name').value;
+            const btn = document.getElementById('terms-btn');
+            const done = id && termsAgreed[id] === true;
+            btn.textContent = done ? '✓ 確認済み' : '確認しました';
+            btn.className = (done ? 'bg-white text-autumn-accent border-2 border-autumn-accent' : 'bg-autumn-accent hover:bg-autumn-accent-light text-white') +
+                ' font-bold px-4 py-3 rounded-2xl transition-colors shadow-sm active:scale-95 whitespace-nowrap';
+        }
+        async function toggleTermsAgree() {
+            const id = document.getElementById('terms-name').value;
+            const msg = document.getElementById('terms-msg');
+            const show = (t, ok) => { msg.textContent = t; msg.className = 'text-xs font-bold text-center ' + (ok ? 'text-green-600' : 'text-autumn-accent'); };
+            if (!id) return show('まず自分の名前を選んでね', false);
+            if (!SYNC_ENABLED) return show('同期が未設定のため送信できません', false);
+            const next = termsAgreed[id] !== true;
+            if (!next && !confirm('確認済みを取り消しますか？')) return;
+            try {
+                const res = next
+                    ? await fetch(SYNC_DB_URL + '/terms/' + id + '.json', { method: 'PUT', body: 'true' })
+                    : await fetch(SYNC_DB_URL + '/terms/' + id + '.json', { method: 'DELETE' });
+                if (!res.ok) throw new Error(res.status);
+                termsAgreed = Object.assign({}, termsAgreed);
+                if (next) termsAgreed[id] = true; else delete termsAgreed[id];
+                renderTerms();
+                show(next ? `${appleName(id)}さん、確認ありがとう！` : '取り消しました', true);
+            } catch (e) {
+                show('送信に失敗しました。電波を確認してもう一度どうぞ', false);
+            }
+        }
+
         // 謎解きの判定処理（ステージ2：2段階）
         //   1段階目: 8Q8W8JVP+34 → 「住所ではない。…さて、どこへたどり着く？」
         //   2段階目: 軽井沢   → 「お見事。本日の旅先は軽井沢です。」
@@ -944,6 +977,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             buildStageOptions();
             buildApplePlayers();
+            buildTermsPlayers();
             renderApple();
             renderAppleAdmin(true);
             try {
