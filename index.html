@@ -543,9 +543,9 @@
                 const step1Msg = document.getElementById('nazo-step1-ok');
                 step1Msg.classList.remove('hidden');
                 step1Msg.after(document.getElementById('answer-form')); // 入力欄をメッセージの下へ移動
-                document.getElementById('answer-label').textContent = '場所の名前を入力';
+                document.getElementById('answer-label').textContent = '町の名前を入力';
                 inputEl.value = '';
-                inputEl.placeholder = '場所の名前を入力';
+                inputEl.placeholder = '町の名前を入力';
                 inputEl.classList.remove('tracking-wider');
                 inputEl.focus();
                 step1Msg.scrollIntoView({ behavior: 'smooth', block: 'start' });
