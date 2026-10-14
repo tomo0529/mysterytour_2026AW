@@ -187,14 +187,17 @@
             <!-- ステージ3：旧軽井沢 ランチ作戦会議 -->
             <!-- ========================================== -->
             <section id="stage-3" class="stage space-y-6 hidden">
-                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
+                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-5">
                     <div>
-                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">STAGE 3 ・ 13:00</span>
+                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">MISSION 2</span>
                         <h3 class="text-lg font-bold text-autumn-text">旧軽井沢 ランチ作戦会議</h3>
                     </div>
-                    <div class="bg-autumn-bg rounded-2xl p-5 text-center">
-                        <p class="text-3xl mb-2">🍽️</p>
-                        <p class="text-xs text-gray-500 font-bold">このステージの内容は準備中です</p>
+                    <div class="bg-autumn-bg rounded-2xl p-5 text-center space-y-3 text-sm font-bold text-autumn-text leading-relaxed">
+                        <p class="text-3xl">🍽️</p>
+                        <p>目的地が判明したら、次なるミッション。</p>
+                        <p>軽井沢での腹ごしらえ、<br>何を食べるか作戦会議を開始せよ。</p>
+                        <p>信州グルメを攻めるもよし、<br>オシャレなカフェで優雅に過ごすもよし。</p>
+                        <p class="text-autumn-accent">全員の胃袋を満たす<br>最高のランチを決定せよ！</p>
                     </div>
                 </div>
             </section>
@@ -205,7 +208,7 @@
             <section id="stage-4" class="stage space-y-6 hidden">
                 <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
                     <div>
-                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">STAGE 4 ・ 14:45</span>
+                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">MISSION 3</span>
                         <h3 class="text-lg font-bold text-autumn-text">松井農園 りんご狩り</h3>
                     </div>
                     <div class="bg-autumn-bg rounded-2xl p-5 text-center">
@@ -221,7 +224,7 @@
             <section id="stage-5" class="stage space-y-6 hidden">
                 <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
                     <div>
-                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">STAGE 5 ・ 16:30</span>
+                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">MISSION 4</span>
                         <h3 class="text-lg font-bold text-autumn-text">白糸の滝（夕暮れ散策）</h3>
                     </div>
                     <div class="bg-autumn-bg rounded-2xl p-5 text-center">
@@ -237,7 +240,7 @@
             <section id="stage-6" class="stage space-y-6 hidden">
                 <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
                     <div>
-                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">STAGE 6 ・ 17:30</span>
+                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">MISSION 5</span>
                         <h3 class="text-lg font-bold text-autumn-text">ツルヤ 軽井沢店（買い出し）</h3>
                     </div>
                     <div class="bg-autumn-bg rounded-2xl p-5 text-center">
@@ -253,7 +256,7 @@
             <section id="stage-7" class="stage space-y-6 hidden">
                 <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
                     <div>
-                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">STAGE 7 ・ 2日目 10:45</span>
+                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">MISSION 6</span>
                         <h3 class="text-lg font-bold text-autumn-text">アミーチアドベンチャー軽井沢</h3>
                     </div>
                     <div class="bg-autumn-bg rounded-2xl p-5 text-center">
@@ -435,7 +438,7 @@
                 <label class="stage-option block cursor-pointer">
                     <input type="radio" name="stage" value="${num}" class="sr-only" onchange="selectStage(${num})">
                     <span class="flex items-center gap-2 bg-autumn-bg rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-autumn-text transition-colors">
-                        <span class="w-3 text-center opacity-70">${num}</span>${name}
+                        <span class="w-7 shrink-0 text-center opacity-70">${num == 1 ? '案内' : 'M' + (num - 1)}</span>${name}
                     </span>
                 </label>`).join('');
         }
