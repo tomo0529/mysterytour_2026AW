@@ -154,7 +154,7 @@
                     <div class="space-y-2 pt-1">
                         <label id="answer-label" class="text-xs font-bold text-gray-500 pl-1">答えを入力</label>
                         <div class="flex space-x-2">
-                            <input type="text" id="answer-input" placeholder="答えを入力" autocomplete="off" class="flex-1 min-w-0 bg-autumn-bg border-none rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent transition-shadow placeholder-gray-400">
+                            <input type="text" id="answer-input" placeholder="◯◯◯◯◯◯◯◯+◯◯" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-autumn-bg border-none rounded-2xl px-4 py-3 text-sm font-bold tracking-wider text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent transition-shadow placeholder-gray-400">
                             <button id="answer-btn" onclick="checkAnswer()" class="bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold px-6 py-3 rounded-2xl transition-colors shadow-sm active:scale-95">判定</button>
                         </div>
                         <div id="error-msg" class="hidden mt-2 text-autumn-accent text-xs font-bold text-center">
@@ -399,15 +399,18 @@
         function checkAnswer() {
             const inputEl = document.getElementById('answer-input');
             const errorMsg = document.getElementById('error-msg');
+            // 1段階目は大文字・半角の完全一致のみ（前後の空白だけ無視）
+            const raw = inputEl.value.trim();
             const v = normalizeAnswer(inputEl.value);
 
-            if (nazoStep === 1 && v === '8Q8W8JVP+34') {
+            if (nazoStep === 1 && raw === '8Q8W8JVP+34') {
                 nazoStep = 2;
                 errorMsg.classList.add('hidden');
                 document.getElementById('nazo-step1-ok').classList.remove('hidden');
                 document.getElementById('answer-label').textContent = '場所の名前を入力';
                 inputEl.value = '';
                 inputEl.placeholder = '場所の名前を入力';
+                inputEl.classList.remove('tracking-wider');
                 inputEl.focus();
             } else if (nazoStep === 2 && ['軽井沢', 'かるいざわ', 'カルイザワ'].includes(v)) {
                 nazoStep = 3;
