@@ -142,22 +142,22 @@
             </section>
 
             <!-- ========================================== -->
-            <!-- ステージ11：MISSION 00 自己紹介（M1の前） -->
+            <!-- ステージ11：MISSION 0 自己紹介（M1の前） -->
             <!-- ========================================== -->
             <section id="stage-11" class="stage space-y-6 hidden">
                 <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-5">
                     <div>
-                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">MISSION 00</span>
+                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">MISSION 0</span>
                         <h3 class="text-lg font-bold text-autumn-text">🚗 仲間を知ろう！</h3>
                     </div>
                     <div class="bg-autumn-bg rounded-2xl p-5 text-center space-y-3 text-sm font-bold text-autumn-text leading-relaxed">
                         <p>これから始まる、<br>謎に包まれたシークレットツアー。</p>
-                        <p>長い一日を共に過ごす仲間たちですが、<br>意外と知らない一面も<br>あるかもしれません。</p>
+                        <p>長い一日を共に過ごす仲間たちだが、<br>意外と知らない一面も<br>あるかもしれない。</p>
                         <p>そこで最初のミッションは、<br>お互いのことをもっと知ること！</p>
-                        <p>名前や最近ハマっていること、<br>意外な趣味や特技など、テーマは自由です。</p>
-                        <p>普段はなかなか聞けない話も、<br>この機会に聞いてみましょう。</p>
-                        <p>新たな一面を発見することで、<br>今日の旅がもっと楽しくなるはずです。</p>
-                        <p class="text-autumn-accent">それでは、一人ずつ<br>簡単な自己紹介をお願いします！</p>
+                        <p>名前や最近ハマっていること、<br>意外な趣味や特技など、テーマは自由。</p>
+                        <p>普段はなかなか聞けない話も、<br>この機会に聞いてみよう。</p>
+                        <p>新たな一面を発見することで、<br>今日の旅がもっと楽しくなるはず。</p>
+                        <p class="text-autumn-accent">それでは、一人ずつ<br>簡単な自己紹介を始めよう！</p>
                     </div>
                 </div>
 
@@ -569,7 +569,7 @@
             </label>
             <p id="sync-err" class="hidden text-[10px] font-bold text-autumn-accent"></p>
             <details id="intro-admin" class="bg-autumn-bg rounded-xl px-2.5 py-2">
-                <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🎤 自己紹介（M00）</summary>
+                <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🎤 自己紹介（M0）</summary>
                 <div class="pt-2 space-y-1.5">
                     <p id="intro-admin-msg" class="hidden text-[10px] font-bold"></p>
                     <div class="flex gap-1.5">
@@ -754,7 +754,7 @@
                 <label class="stage-option block cursor-pointer">
                     <input type="radio" name="stage" value="${num}" class="sr-only" onchange="selectStage(${num})">
                     <span class="flex items-center gap-2 bg-autumn-bg rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-autumn-text transition-colors">
-                        <span class="w-7 shrink-0 text-center opacity-70">${STANDBY_STAGES.includes(num) ? '待機' : num == 1 ? '案内' : num == 11 ? 'M00' : 'M' + (num - 1)}</span>${name}
+                        <span class="w-7 shrink-0 text-center opacity-70">${STANDBY_STAGES.includes(num) ? '待機' : num == 1 ? '案内' : num == 11 ? 'M0' : 'M' + (num - 1)}</span>${name}
                     </span>
                 </label>`).join('');
         }
@@ -1423,7 +1423,7 @@
         }
 
         // ==========================================
-        // MISSION 00：自己紹介の順番抽選（Firebase /pub/intro に保存）
+        // MISSION 0：自己紹介の順番抽選（Firebase /pub/intro に保存）
         // ==========================================
         let introOrder = null;     // [id, id, ...]
         let introAnimating = false;
