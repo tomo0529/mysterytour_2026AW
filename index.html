@@ -46,6 +46,14 @@
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* 待機画面のゆっくり点滅 */
+        .standby-pulse {
+            animation: standbyPulse 2.4s ease-in-out infinite;
+        }
+        @keyframes standbyPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
+        }
         /* 幹事メニューのラジオ選択状態 */
         .stage-option input:checked + span {
             background-color: #C86B40;
@@ -368,6 +376,29 @@
                 </div>
             </section>
 
+            <!-- ========================================== -->
+            <!-- 待機画面（standby1：移動中 / standby2：本日の任務完了） -->
+            <!-- ========================================== -->
+            <section id="stage-9" class="stage hidden">
+                <div class="min-h-[70vh] flex flex-col items-center justify-center text-center space-y-8 py-10">
+                    <img src="logo_main.png" alt="秋のミステリーツアー" class="w-full max-w-xs h-auto object-contain drop-shadow-sm">
+                    <div class="space-y-2 standby-pulse">
+                        <p class="text-2xl font-extrabold text-autumn-text">🚗 移動中…</p>
+                        <p class="text-base font-bold text-autumn-accent tracking-widest">次の指令を待て</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="stage-10" class="stage hidden">
+                <div class="min-h-[70vh] flex flex-col items-center justify-center text-center space-y-8 py-10">
+                    <img src="logo_main.png" alt="秋のミステリーツアー" class="w-full max-w-xs h-auto object-contain drop-shadow-sm">
+                    <div class="space-y-2 standby-pulse">
+                        <p class="text-2xl font-extrabold text-autumn-text">🌙 本日の任務完了。</p>
+                        <p class="text-base font-bold text-autumn-accent tracking-widest">明日に備えよう</p>
+                    </div>
+                </div>
+            </section>
+
         </div>
 
     </main>
@@ -440,8 +471,13 @@
             5: 'ツルヤ 軽井沢店（買い出し）',
             6: '白糸の滝',
             7: 'ライジングフィールド軽井沢（発表）',
-            8: 'アスレチック ミッション'
+            8: 'アスレチック ミッション',
+            9: 'standby1 🚗 移動中',
+            10: 'standby2 🌙 本日の任務完了'
         };
+        // 幹事メニューでの並び順（待機画面を一番上に）
+        const STAGE_MENU_ORDER = [9, 10, 1, 2, 3, 4, 5, 6, 7, 8];
+        const STANDBY_STAGES = [9, 10];
         const DEFAULT_STAGE = 1;
         let currentStage = DEFAULT_STAGE;
 
@@ -552,11 +588,11 @@
         // 幹事メニューのラジオボタンを生成
         function buildStageOptions() {
             const wrap = document.getElementById('stage-options');
-            wrap.innerHTML = Object.entries(stageNames).map(([num, name]) => `
+            wrap.innerHTML = STAGE_MENU_ORDER.map(num => [num, stageNames[num]]).map(([num, name]) => `
                 <label class="stage-option block cursor-pointer">
                     <input type="radio" name="stage" value="${num}" class="sr-only" onchange="selectStage(${num})">
                     <span class="flex items-center gap-2 bg-autumn-bg rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-autumn-text transition-colors">
-                        <span class="w-7 shrink-0 text-center opacity-70">${num == 1 ? '案内' : 'M' + (num - 1)}</span>${name}
+                        <span class="w-7 shrink-0 text-center opacity-70">${STANDBY_STAGES.includes(num) ? '待機' : num == 1 ? '案内' : 'M' + (num - 1)}</span>${name}
                     </span>
                 </label>`).join('');
         }
