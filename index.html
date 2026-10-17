@@ -326,6 +326,10 @@
                     <p class="text-xs font-extrabold tracking-widest text-autumn-accent">STEP 3 ・ MINI GAME</p>
                     <h4 class="text-base font-bold text-autumn-text -mt-2">💴 お会計、いくらになる？</h4>
                     <p class="text-xs font-bold text-gray-500 leading-relaxed">買い出しの合計金額をチームで予想しよう。実際の金額に一番近いチームの勝ち！</p>
+                    <div class="rounded-2xl border-2 border-dashed border-autumn-accent/50 bg-autumn-accent/5 p-3 text-center">
+                        <p class="text-[11px] font-bold text-autumn-text">勝利チームには…</p>
+                        <p class="text-base font-extrabold text-autumn-accent">🏆 ミスター・ジャストプライスの称号！</p>
+                    </div>
                     <div id="shop-guess-form" class="space-y-2">
                         <div class="flex space-x-2">
                             <div class="relative flex-1 min-w-0">
@@ -1291,7 +1295,7 @@
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-bold">${shopTeamLabel(r.t)}<span class="text-[11px] font-bold ${top ? 'text-white/80' : 'text-gray-500'}">（${shopMembers(r.t)}）</span></p>
                                 <p class="text-[11px] font-bold ${top ? 'text-white/80' : 'text-gray-500'}">${r.g == null ? '未予想' : '予想 ' + r.g.toLocaleString() + '円'}</p>
-                                ${top ? '<p class="text-xs font-extrabold mt-1">🏆 お会計マスター！</p>' : ''}
+                                ${top ? '<p class="text-xs font-extrabold mt-1">🏆 ミスター・ジャストプライスの称号獲得！</p>' : ''}
                             </div>
                             <span class="text-sm font-extrabold">${r.diff == null ? '' : '差 ' + r.diff.toLocaleString() + '円'}</span>
                         </div>`;
