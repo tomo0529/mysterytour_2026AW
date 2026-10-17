@@ -508,6 +508,21 @@
                 自分の画面だけで確認（全員には反映しない）
             </label>
             <p id="sync-err" class="hidden text-[10px] font-bold text-autumn-accent"></p>
+            <details id="apple-admin" class="bg-autumn-bg rounded-xl px-2.5 py-2">
+                <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🍎 りんご計測（M3）</summary>
+                <div class="pt-2 space-y-1.5">
+                    <div id="apple-admin-rows" class="space-y-1"></div>
+                    <p id="apple-admin-msg" class="hidden text-[10px] font-bold"></p>
+                    <div class="flex gap-1.5 pt-1">
+                        <button onclick="saveAppleDraft()" class="flex-1 bg-white text-autumn-text text-[10px] font-bold py-1.5 rounded-lg active:scale-95">実測を保存</button>
+                        <button onclick="saveAppleResult(true)" class="flex-1 bg-autumn-accent text-white text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表する</button>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="saveAppleResult(false, true)" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表を取り消す</button>
+                        <button onclick="resetApple()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">全リセット</button>
+                    </div>
+                </div>
+            </details>
             <details id="shop-admin" class="bg-autumn-bg rounded-xl px-2.5 py-2">
                 <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🛒 買い出し（M4）</summary>
                 <div class="pt-2 space-y-1.5 text-[11px] font-bold text-autumn-text">
@@ -525,21 +540,6 @@
                     <div class="flex gap-1.5">
                         <button onclick="redrawShopTeams()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">チームを引き直す</button>
                         <button onclick="resetShop()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">全リセット</button>
-                    </div>
-                </div>
-            </details>
-            <details id="apple-admin" class="bg-autumn-bg rounded-xl px-2.5 py-2">
-                <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🍎 りんご計測（M3）</summary>
-                <div class="pt-2 space-y-1.5">
-                    <div id="apple-admin-rows" class="space-y-1"></div>
-                    <p id="apple-admin-msg" class="hidden text-[10px] font-bold"></p>
-                    <div class="flex gap-1.5 pt-1">
-                        <button onclick="saveAppleDraft()" class="flex-1 bg-white text-autumn-text text-[10px] font-bold py-1.5 rounded-lg active:scale-95">実測を保存</button>
-                        <button onclick="saveAppleResult(true)" class="flex-1 bg-autumn-accent text-white text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表する</button>
-                    </div>
-                    <div class="flex gap-1.5">
-                        <button onclick="saveAppleResult(false, true)" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表を取り消す</button>
-                        <button onclick="resetApple()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">全リセット</button>
                     </div>
                 </div>
             </details>
