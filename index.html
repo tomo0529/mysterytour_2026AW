@@ -287,6 +287,73 @@
                         <p class="text-autumn-accent">買い出しから調理まで、<br>チームワークが試される！</p>
                     </div>
                 </div>
+
+                <!-- ① チーム抽選 -->
+                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
+                    <p class="text-xs font-extrabold tracking-widest text-autumn-accent">STEP 1</p>
+                    <h4 class="text-base font-bold text-autumn-text -mt-2">🎲 チーム抽選（2人×3チーム）</h4>
+                    <div id="shop-draw-wrap" class="space-y-2">
+                        <p class="text-xs font-bold text-gray-500">誰か1人がボタンを押してね！</p>
+                        <button id="shop-draw-btn" onclick="drawShopTeams()" class="w-full bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold py-4 rounded-2xl text-base shadow-sm active:scale-95 transition">🎲 チームを抽選する</button>
+                        <p id="shop-draw-msg" class="hidden text-xs font-bold text-center text-autumn-accent"></p>
+                    </div>
+                    <div id="shop-teams" class="hidden grid grid-cols-1 gap-2"></div>
+                </div>
+
+                <!-- ② 料理を決めて入力 -->
+                <div id="shop-step2" class="hidden bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
+                    <p class="text-xs font-extrabold tracking-widest text-autumn-accent">STEP 2</p>
+                    <h4 class="text-base font-bold text-autumn-text -mt-2">🍳 チームで作る料理を決めよう</h4>
+                    <p class="text-xs font-bold text-gray-500 leading-relaxed">チームで話し合って1品決めたら入力してね。3チームそろったら一斉に発表！</p>
+                    <div class="space-y-1">
+                        <label for="shop-name" class="text-xs font-bold text-gray-500 pl-1">自分の名前を選択</label>
+                        <select id="shop-name" onchange="onShopNameChange()" class="w-full bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent appearance-none"></select>
+                        <p id="shop-myteam" class="hidden text-xs font-bold text-autumn-accent pl-1"></p>
+                    </div>
+                    <div id="shop-dish-form" class="space-y-2">
+                        <div class="flex space-x-2">
+                            <input type="text" id="shop-dish" maxlength="40" placeholder="例: きのこの炊き込みご飯" class="flex-1 min-w-0 bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent placeholder-gray-400">
+                            <button onclick="submitShopDish()" class="bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold px-5 py-3 rounded-2xl shadow-sm active:scale-95 transition">決定</button>
+                        </div>
+                        <p id="shop-dish-msg" class="hidden text-xs font-bold text-center"></p>
+                    </div>
+                    <div id="shop-dish-status" class="flex flex-wrap gap-1.5"></div>
+                    <div id="shop-dishes" class="hidden fade-in space-y-2"></div>
+                </div>
+
+                <!-- ③ 合計金額を予想 -->
+                <div id="shop-step3" class="hidden bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
+                    <p class="text-xs font-extrabold tracking-widest text-autumn-accent">STEP 3 ・ MINI GAME</p>
+                    <h4 class="text-base font-bold text-autumn-text -mt-2">💴 お会計、いくらになる？</h4>
+                    <p class="text-xs font-bold text-gray-500 leading-relaxed">買い出しの合計金額をチームで予想しよう。実際の金額に一番近いチームの勝ち！</p>
+                    <div id="shop-guess-form" class="space-y-2">
+                        <div class="flex space-x-2">
+                            <div class="relative flex-1 min-w-0">
+                                <input type="number" id="shop-guess" inputmode="numeric" min="1" step="1" placeholder="例: 8000" class="w-full bg-autumn-bg rounded-2xl pl-4 pr-10 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent placeholder-gray-400">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">円</span>
+                            </div>
+                            <button onclick="submitShopGuess()" class="bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold px-5 py-3 rounded-2xl shadow-sm active:scale-95 transition">予想する</button>
+                        </div>
+                        <p id="shop-guess-msg" class="hidden text-xs font-bold text-center"></p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 mb-2 pl-1">予想済み（発表まで変更できます）</p>
+                        <div id="shop-guess-status" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                </div>
+
+                <!-- ④ 結果発表 -->
+                <div id="shop-result" class="hidden fade-in bg-card-bg rounded-3xl p-6 shadow-soft space-y-4 border-2 border-autumn-accent/20">
+                    <div class="flex justify-between items-start">
+                        <span class="inline-block px-3 py-1 bg-autumn-accent/10 text-autumn-accent font-bold text-xs rounded-full">RESULT</span>
+                        <span class="text-2xl">🧾</span>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs font-bold text-gray-500">お会計の合計は…</p>
+                        <p id="shop-actual" class="text-3xl font-extrabold text-autumn-accent"></p>
+                    </div>
+                    <div id="shop-ranking" class="space-y-2"></div>
+                </div>
             </section>
 
             <!-- ========================================== -->
@@ -437,13 +504,33 @@
                 自分の画面だけで確認（全員には反映しない）
             </label>
             <p id="sync-err" class="hidden text-[10px] font-bold text-autumn-accent"></p>
+            <details id="shop-admin" class="bg-autumn-bg rounded-xl px-2.5 py-2">
+                <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🛒 買い出し（M4）</summary>
+                <div class="pt-2 space-y-1.5 text-[11px] font-bold text-autumn-text">
+                    <div id="shop-admin-info" class="space-y-1"></div>
+                    <div class="flex items-center gap-1.5 pt-1">
+                        <span class="shrink-0">実際の合計</span>
+                        <input type="number" inputmode="numeric" id="shop-admin-actual" placeholder="金額" class="flex-1 min-w-0 bg-white rounded-lg px-2 py-1 text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                        <span class="text-gray-400">円</span>
+                    </div>
+                    <p id="shop-admin-msg" class="hidden text-[10px] font-bold"></p>
+                    <div class="flex gap-1.5">
+                        <button onclick="saveShopResult(true)" class="flex-1 bg-autumn-accent text-white text-[10px] font-bold py-1.5 rounded-lg active:scale-95">結果を発表</button>
+                        <button onclick="saveShopResult(false)" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表を取り消す</button>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="redrawShopTeams()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">チームを引き直す</button>
+                        <button onclick="resetShop()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">全リセット</button>
+                    </div>
+                </div>
+            </details>
             <details id="apple-admin" class="bg-autumn-bg rounded-xl px-2.5 py-2">
                 <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🍎 りんご計測（M3）</summary>
                 <div class="pt-2 space-y-1.5">
                     <div id="apple-admin-rows" class="space-y-1"></div>
                     <p id="apple-admin-msg" class="hidden text-[10px] font-bold"></p>
                     <div class="flex gap-1.5 pt-1">
-                        <button onclick="saveAppleResult(false)" class="flex-1 bg-white text-autumn-text text-[10px] font-bold py-1.5 rounded-lg active:scale-95">実測を保存</button>
+                        <button onclick="saveAppleDraft()" class="flex-1 bg-white text-autumn-text text-[10px] font-bold py-1.5 rounded-lg active:scale-95">実測を保存</button>
                         <button onclick="saveAppleResult(true)" class="flex-1 bg-autumn-accent text-white text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表する</button>
                     </div>
                     <div class="flex gap-1.5">
@@ -731,10 +818,29 @@
             return es;
         }
         function startAppleSync() {
-            appleSources.push(fbSubscribe('/apple/guesses', v => { appleGuesses = v || {}; renderApple(); renderAppleAdmin(false); }));
-            appleSources.push(fbSubscribe('/apple/result/actual', v => { appleActual = v || {}; renderApple(); renderAppleAdmin(true); }));
-            appleSources.push(fbSubscribe('/apple/result/revealed', v => { appleRevealed = v === true; renderApple(); }));
-            appleSources.push(fbSubscribe('/terms', v => { termsAgreed = v || {}; renderTerms(); }));
+            // 接続数を抑えるため、参加者が書き込むデータは /pub にまとめて1本で受信
+            //   ※ブラウザは同じサイトへの同時接続が6本までのため
+            appleSources.push(fbSubscribe('/pub', v => {
+                v = v || {};
+                appleGuesses = v.apple || {};
+                termsAgreed = v.terms || {};
+                const shop = v.shop || {};
+                shopDishes = shop.dishes || {};
+                shopGuesses = shop.guesses || {};
+                onShopTeams(shop.teams || null);
+                renderApple(); renderAppleAdmin(false); renderTerms(); renderShop();
+            }));
+            // 幹事の発表データ：実測値が入っている＝発表済み
+            appleSources.push(fbSubscribe('/res/apple/actual', v => {
+                appleActual = v || {};
+                appleRevealed = Object.keys(appleActual).length > 0;
+                renderApple(); renderAppleAdmin(true);
+            }));
+            appleSources.push(fbSubscribe('/res/shop/actual', v => {
+                shopActual = typeof v === 'number' ? v : null;
+                shopRevealed = shopActual != null;
+                renderShop();
+            }));
         }
         function refreshAppleSync() {
             appleSources.forEach(es => es.refetch());
@@ -786,7 +892,7 @@
             const btn = document.getElementById('apple-submit');
             btn.disabled = true;
             try {
-                const res = await fetch(SYNC_DB_URL + '/apple/guesses/' + id + '.json', { method: 'PUT', body: JSON.stringify(g) });
+                const res = await fetch(SYNC_DB_URL + '/pub/apple/' + id + '.json', { method: 'PUT', body: JSON.stringify(g) });
                 if (!res.ok) throw new Error(res.status);
                 appleGuesses = Object.assign({}, appleGuesses, { [id]: g });
                 renderApple();
@@ -861,33 +967,50 @@
                 const g = appleGuesses[p.id];
                 document.getElementById('apple-admin-guess-' + p.id).textContent = g != null ? `予想 ${g}` : '予想 －';
                 const input = document.getElementById('apple-admin-actual-' + p.id);
-                if (fillActual && document.activeElement !== input) input.value = appleActual[p.id] ?? '';
+                if (fillActual && document.activeElement !== input) input.value = appleActual[p.id] ?? appleDraft()[p.id] ?? '';
             });
+        }
+        function appleDraft() {
+            try { return JSON.parse(localStorage.getItem('appleActualDraft') || '{}') || {}; } catch (e) { return {}; }
         }
         function showAppleAdminMsg(text, ok) {
             const el = document.getElementById('apple-admin-msg');
             el.textContent = text;
             el.className = 'text-[10px] font-bold ' + (ok ? 'text-green-600' : 'text-autumn-accent');
         }
-        async function saveAppleResult(reveal, unreveal = false) {
+        function readAppleAdminActual() {
             const actual = {};
             for (const p of APPLE_PLAYERS) {
                 const v = document.getElementById('apple-admin-actual-' + p.id).value.trim();
                 if (v === '') continue;
                 const n = parseInt(v, 10);
-                if (!(n >= 0 && n <= 1999)) return showAppleAdminMsg(`${p.name}の実測値を確認してください`, false);
+                if (!(n >= 0 && n <= 1999)) { showAppleAdminMsg(`${p.name}の実測値を確認してください`, false); return null; }
                 actual[p.id] = n;
             }
-            if (reveal && Object.keys(actual).length < APPLE_PLAYERS.length &&
-                !confirm('実測が入っていない人がいます。このまま発表しますか？')) return;
-            const revealed = unreveal ? false : (reveal ? true : appleRevealed);
+            return actual;
+        }
+        // 「実測を保存」はこの端末にだけ一時保存（発表するまで誰にも見えない）
+        function saveAppleDraft() {
+            const actual = readAppleAdminActual();
+            if (!actual) return;
+            try { localStorage.setItem('appleActualDraft', JSON.stringify(actual)); } catch (e) {}
+            showAppleAdminMsg('実測をこの端末に保存しました（未発表）', true);
+        }
+        async function saveAppleResult(reveal, unreveal = false) {
+            let body = { key: adminPass };
+            if (!unreveal) {
+                const actual = readAppleAdminActual();
+                if (!actual) return;
+                if (!Object.keys(actual).length) return showAppleAdminMsg('実測を1人以上入力してください', false);
+                if (Object.keys(actual).length < APPLE_PLAYERS.length &&
+                    !confirm('実測が入っていない人がいます。このまま発表しますか？')) return;
+                body.actual = actual;
+                try { localStorage.setItem('appleActualDraft', JSON.stringify(actual)); } catch (e) {}
+            }
             try {
-                const res = await fetch(SYNC_DB_URL + '/apple/result.json', {
-                    method: 'PUT',
-                    body: JSON.stringify({ key: adminPass, revealed, actual })
-                });
+                const res = await fetch(SYNC_DB_URL + '/res/apple.json', { method: 'PUT', body: JSON.stringify(body) });
                 if (!res.ok) throw new Error(res.status);
-                showAppleAdminMsg(unreveal ? '発表を取り消しました' : reveal ? '全員の画面に結果を発表しました！' : '実測を保存しました（未発表）', true);
+                showAppleAdminMsg(unreveal ? '発表を取り消しました' : '全員の画面に結果を発表しました！', true);
             } catch (e) {
                 showAppleAdminMsg('保存に失敗しました', false);
             }
@@ -896,13 +1019,12 @@
             if (!confirm('予想と実測をすべて消去します。よろしいですか？')) return;
             try {
                 // 先に発表状態を解除（発表中は予想の書き換えができないため）
-                let res = await fetch(SYNC_DB_URL + '/apple/result.json', {
-                    method: 'PUT', body: JSON.stringify({ key: adminPass, revealed: false, actual: {} })
-                });
+                const res = await fetch(SYNC_DB_URL + '/res/apple.json', { method: 'PUT', body: JSON.stringify({ key: adminPass }) });
                 if (!res.ok) throw new Error(res.status);
                 await Promise.all(APPLE_PLAYERS.map(p =>
-                    fetch(SYNC_DB_URL + '/apple/guesses/' + p.id + '.json', { method: 'DELETE' })));
+                    fetch(SYNC_DB_URL + '/pub/apple/' + p.id + '.json', { method: 'DELETE' })));
                 APPLE_PLAYERS.forEach(p => document.getElementById('apple-admin-actual-' + p.id).value = '');
+                try { localStorage.removeItem('appleActualDraft'); } catch (e) {}
                 showAppleAdminMsg('リセットしました', true);
             } catch (e) {
                 showAppleAdminMsg('リセットに失敗しました', false);
@@ -951,8 +1073,8 @@
             if (!next && !confirm('確認済みを取り消しますか？')) return;
             try {
                 const res = next
-                    ? await fetch(SYNC_DB_URL + '/terms/' + id + '.json', { method: 'PUT', body: 'true' })
-                    : await fetch(SYNC_DB_URL + '/terms/' + id + '.json', { method: 'DELETE' });
+                    ? await fetch(SYNC_DB_URL + '/pub/terms/' + id + '.json', { method: 'PUT', body: 'true' })
+                    : await fetch(SYNC_DB_URL + '/pub/terms/' + id + '.json', { method: 'DELETE' });
                 if (!res.ok) throw new Error(res.status);
                 termsAgreed = Object.assign({}, termsAgreed);
                 if (next) termsAgreed[id] = true; else delete termsAgreed[id];
@@ -960,6 +1082,279 @@
                 show(next ? `${appleName(id)}さん、確認ありがとう！` : '取り消しました', true);
             } catch (e) {
                 show('送信に失敗しました。電波を確認してもう一度どうぞ', false);
+            }
+        }
+
+        // ==========================================
+        // M4：買い出し（チーム抽選 → 料理決め → 合計金額予想）
+        //   データは Firebase の /shop に保存
+        // ==========================================
+        const SHOP_TEAMS = ['A', 'B', 'C'];
+        let shopTeams = null;      // { A: [id, id], B: [...], C: [...] }
+        let shopDishes = {};       // { A: '料理名' }
+        let shopGuesses = {};      // { A: 金額 }
+        let shopActual = null;
+        let shopRevealed = false;
+        let shopAnimating = false;
+
+        function shopTeamOf(id) {
+            if (!shopTeams || !id) return null;
+            return SHOP_TEAMS.find(t => (shopTeams[t] || []).includes(id)) || null;
+        }
+        function shopTeamLabel(t) {
+            return `チーム${t}`;
+        }
+        function shopMembers(t) {
+            return ((shopTeams && shopTeams[t]) || []).map(appleName).join('・');
+        }
+        function shopMsg(elId, text, ok) {
+            const el = document.getElementById(elId);
+            el.textContent = text;
+            el.className = 'text-xs font-bold text-center ' + (ok ? 'text-green-600' : 'text-autumn-accent');
+        }
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        // ---------- STEP 1：抽選 ----------
+        async function drawShopTeams(force = false) {
+            if (!SYNC_ENABLED) return shopMsg('shop-draw-msg', '同期が未設定のため抽選できません', false);
+            if (shopTeams && !force) return;
+            const ids = shuffle(APPLE_PLAYERS.map(p => p.id));
+            const teams = { A: ids.slice(0, 2), B: ids.slice(2, 4), C: ids.slice(4, 6) };
+            document.getElementById('shop-draw-btn').disabled = true;
+            try {
+                const res = await fetch(SYNC_DB_URL + '/pub/shop/teams.json', { method: 'PUT', body: JSON.stringify(teams) });
+                if (!res.ok) throw new Error(res.status);
+            } catch (e) {
+                shopMsg('shop-draw-msg', '抽選に失敗しました。電波を確認してもう一度どうぞ', false);
+            } finally {
+                document.getElementById('shop-draw-btn').disabled = false;
+            }
+        }
+        // 抽選結果が届いたら、名前がシャッフルされる演出のあと結果を表示
+        function onShopTeams(v) {
+            const before = shopTeams;
+            const next = (v && v.A) ? v : null;
+            if (JSON.stringify(before) === JSON.stringify(next)) return;
+            shopTeams = next;
+            if (!before && shopTeams && document.getElementById('stage-5').offsetParent !== null) {
+                playShopDrawAnimation();
+            } else {
+                renderShop();
+            }
+        }
+        function playShopDrawAnimation() {
+            shopAnimating = true;
+            const wrap = document.getElementById('shop-teams');
+            document.getElementById('shop-draw-wrap').classList.add('hidden');
+            wrap.classList.remove('hidden');
+            const names = APPLE_PLAYERS.map(p => p.name);
+            let n = 0;
+            const timer = setInterval(() => {
+                const sh = shuffle(names);
+                wrap.innerHTML = SHOP_TEAMS.map((t, i) => shopTeamCard(t, `${sh[i * 2]}・${sh[i * 2 + 1]}`, true)).join('');
+                if (++n >= 14) {
+                    clearInterval(timer);
+                    shopAnimating = false;
+                    renderShop();
+                }
+            }, 110);
+        }
+        function shopTeamCard(t, members, spinning = false) {
+            return `
+                <div class="flex items-center gap-3 rounded-2xl px-4 py-3 bg-autumn-bg">
+                    <span class="w-16 shrink-0 text-xs font-extrabold text-autumn-accent">${shopTeamLabel(t)}</span>
+                    <span class="text-sm font-bold text-autumn-text ${spinning ? 'opacity-50' : ''}">${members}</span>
+                </div>`;
+        }
+
+        // ---------- STEP 2：料理 ----------
+        function buildShopPlayers() {
+            const sel = document.getElementById('shop-name');
+            sel.innerHTML = '<option value="">▼ 名前を選ぶ</option>' +
+                APPLE_PLAYERS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            try {
+                const saved = localStorage.getItem('appleMe');
+                if (saved && APPLE_PLAYERS.some(p => p.id === saved)) sel.value = saved;
+            } catch (e) {}
+        }
+        function onShopNameChange() {
+            const id = document.getElementById('shop-name').value;
+            try { if (id) localStorage.setItem('appleMe', id); } catch (e) {}
+            document.getElementById('shop-dish').value = '';
+            document.getElementById('shop-guess').value = '';
+            ['shop-dish-msg', 'shop-guess-msg'].forEach(i => document.getElementById(i).className = 'hidden');
+            renderShop();
+        }
+        function myShopTeam() {
+            return shopTeamOf(document.getElementById('shop-name').value);
+        }
+        async function submitShopDish() {
+            const t = myShopTeam();
+            const dish = document.getElementById('shop-dish').value.trim();
+            if (!t) return shopMsg('shop-dish-msg', 'まず自分の名前を選んでね', false);
+            if (!dish) return shopMsg('shop-dish-msg', '料理名を入力してね', false);
+            try {
+                const res = await fetch(SYNC_DB_URL + '/pub/shop/dishes/' + t + '.json', { method: 'PUT', body: JSON.stringify(dish.slice(0, 40)) });
+                if (!res.ok) throw new Error(res.status);
+                shopDishes = Object.assign({}, shopDishes, { [t]: dish });
+                renderShop();
+                shopMsg('shop-dish-msg', `${shopTeamLabel(t)}の料理を「${dish}」で登録したよ！`, true);
+            } catch (e) {
+                shopMsg('shop-dish-msg', '送信に失敗しました。もう一度どうぞ', false);
+            }
+        }
+
+        // ---------- STEP 3：金額予想 ----------
+        async function submitShopGuess() {
+            const t = myShopTeam();
+            const raw = document.getElementById('shop-guess').value.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+            const g = parseInt(raw, 10);
+            if (!t) return shopMsg('shop-guess-msg', 'まず自分の名前を選んでね', false);
+            if (!(g >= 1 && g < 1000000)) return shopMsg('shop-guess-msg', '金額を数字で入力してね', false);
+            if (shopRevealed) return shopMsg('shop-guess-msg', '結果発表済みのため変更できません', false);
+            try {
+                const res = await fetch(SYNC_DB_URL + '/pub/shop/guesses/' + t + '.json', { method: 'PUT', body: JSON.stringify(g) });
+                if (!res.ok) throw new Error(res.status);
+                shopGuesses = Object.assign({}, shopGuesses, { [t]: g });
+                renderShop();
+                shopMsg('shop-guess-msg', `${shopTeamLabel(t)}、${g.toLocaleString()}円で予想したよ！`, true);
+            } catch (e) {
+                shopMsg('shop-guess-msg', '送信に失敗しました。もう一度どうぞ', false);
+            }
+        }
+
+        // ---------- 表示 ----------
+        function shopChip(label, done) {
+            return `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${done ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-gray-400'}">${done ? '✓ ' : ''}${label}</span>`;
+        }
+        function renderShop() {
+            if (shopAnimating) return;
+            const hasTeams = !!shopTeams;
+            document.getElementById('shop-draw-wrap').classList.toggle('hidden', hasTeams);
+            const teamsEl = document.getElementById('shop-teams');
+            teamsEl.classList.toggle('hidden', !hasTeams);
+            if (hasTeams) teamsEl.innerHTML = SHOP_TEAMS.map(t => shopTeamCard(t, shopMembers(t))).join('');
+
+            document.getElementById('shop-step2').classList.toggle('hidden', !hasTeams);
+            const t = myShopTeam();
+            const myTeamEl = document.getElementById('shop-myteam');
+            myTeamEl.classList.toggle('hidden', !t);
+            if (t) myTeamEl.textContent = `あなたは ${shopTeamLabel(t)}（${shopMembers(t)}）`;
+
+            // 料理：3チームそろうまで中身は伏せる
+            const allDishes = SHOP_TEAMS.every(x => shopDishes[x]);
+            document.getElementById('shop-dish-status').innerHTML = allDishes ? '' :
+                SHOP_TEAMS.map(x => shopChip(shopTeamLabel(x), !!shopDishes[x])).join('');
+            const dishesEl = document.getElementById('shop-dishes');
+            dishesEl.classList.toggle('hidden', !allDishes);
+            if (allDishes) {
+                dishesEl.innerHTML = '<p class="text-xs font-extrabold text-autumn-accent text-center">🎉 今夜のメニュー発表！</p>' +
+                    SHOP_TEAMS.map(x => `
+                        <div class="rounded-2xl px-4 py-3 bg-autumn-bg">
+                            <p class="text-[11px] font-bold text-gray-500">${shopTeamLabel(x)}（${shopMembers(x)}）</p>
+                            <p class="text-base font-extrabold text-autumn-text">${escapeHtml(shopDishes[x])}</p>
+                        </div>`).join('');
+            }
+            const dishInput = document.getElementById('shop-dish');
+            if (t && shopDishes[t] && dishInput.value === '' && document.activeElement !== dishInput) dishInput.value = shopDishes[t];
+
+            // 金額予想
+            document.getElementById('shop-step3').classList.toggle('hidden', !hasTeams);
+            document.getElementById('shop-guess-form').classList.toggle('hidden', shopRevealed);
+            document.getElementById('shop-guess-status').innerHTML =
+                SHOP_TEAMS.map(x => shopChip(shopTeamLabel(x), shopGuesses[x] != null)).join('');
+            const guessInput = document.getElementById('shop-guess');
+            if (t && shopGuesses[t] != null && guessInput.value === '' && document.activeElement !== guessInput) guessInput.value = shopGuesses[t];
+
+            // 結果
+            const showResult = shopRevealed && shopActual != null;
+            document.getElementById('shop-result').classList.toggle('hidden', !showResult);
+            if (showResult) {
+                document.getElementById('shop-actual').textContent = shopActual.toLocaleString() + '円';
+                const rows = SHOP_TEAMS.map(x => ({ t: x, g: shopGuesses[x], diff: shopGuesses[x] != null ? Math.abs(shopGuesses[x] - shopActual) : null }))
+                    .sort((p, q) => (p.diff ?? Infinity) - (q.diff ?? Infinity));
+                let rank = 0, prev = null;
+                document.getElementById('shop-ranking').innerHTML = rows.map((r, i) => {
+                    if (r.diff !== prev) { rank = i + 1; prev = r.diff; }
+                    const top = r.diff != null && rank === 1;
+                    const medal = r.diff == null ? '－' : (['🥇', '🥈', '🥉'][rank - 1] || rank + '位');
+                    return `
+                        <div class="flex items-center gap-3 rounded-2xl px-4 py-3 ${top ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-autumn-text'}">
+                            <span class="w-8 text-center text-lg font-extrabold">${medal}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-bold">${shopTeamLabel(r.t)}<span class="text-[11px] font-bold ${top ? 'text-white/80' : 'text-gray-500'}">（${shopMembers(r.t)}）</span></p>
+                                <p class="text-[11px] font-bold ${top ? 'text-white/80' : 'text-gray-500'}">${r.g == null ? '未予想' : '予想 ' + r.g.toLocaleString() + '円'}</p>
+                                ${top ? '<p class="text-xs font-extrabold mt-1">🏆 お会計マスター！</p>' : ''}
+                            </div>
+                            <span class="text-sm font-extrabold">${r.diff == null ? '' : '差 ' + r.diff.toLocaleString() + '円'}</span>
+                        </div>`;
+                }).join('');
+            }
+            renderShopAdmin();
+        }
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        // ---------- 幹事 ----------
+        function renderShopAdmin() {
+            const info = document.getElementById('shop-admin-info');
+            info.innerHTML = !shopTeams ? '<p class="text-gray-400">まだ抽選されていません</p>' :
+                SHOP_TEAMS.map(t => `
+                    <div class="bg-white rounded-lg px-2 py-1">
+                        <p>${shopTeamLabel(t)}：${shopMembers(t)}</p>
+                        <p class="text-gray-500">🍳 ${shopDishes[t] ? escapeHtml(shopDishes[t]) : '－'} ／ 💴 ${shopGuesses[t] != null ? shopGuesses[t].toLocaleString() + '円' : '－'}</p>
+                    </div>`).join('');
+            const actualInput = document.getElementById('shop-admin-actual');
+            if (shopActual != null && actualInput.value === '' && document.activeElement !== actualInput) actualInput.value = shopActual;
+        }
+        function shopAdminMsg(text, ok) {
+            const el = document.getElementById('shop-admin-msg');
+            el.textContent = text;
+            el.className = 'text-[10px] font-bold ' + (ok ? 'text-green-600' : 'text-autumn-accent');
+        }
+        async function saveShopResult(reveal) {
+            const n = parseInt(document.getElementById('shop-admin-actual').value.trim(), 10);
+            if (reveal && !(n >= 1 && n < 1000000)) return shopAdminMsg('実際の合計金額を入力してください', false);
+            const body = reveal ? { key: adminPass, actual: n } : { key: adminPass };
+            try {
+                const res = await fetch(SYNC_DB_URL + '/res/shop.json', { method: 'PUT', body: JSON.stringify(body) });
+                if (!res.ok) throw new Error(res.status);
+                shopAdminMsg(reveal ? '全員の画面に結果を発表しました！' : '発表を取り消しました', true);
+            } catch (e) {
+                shopAdminMsg('保存に失敗しました', false);
+            }
+        }
+        async function redrawShopTeams() {
+            if (!confirm('チームを引き直します。登録済みの料理と予想は消えます。よろしいですか？')) return;
+            await clearShopEntries();
+            await drawShopTeams(true);
+            shopAdminMsg('チームを引き直しました', true);
+        }
+        async function clearShopEntries() {
+            await fetch(SYNC_DB_URL + '/res/shop.json', { method: 'PUT', body: JSON.stringify({ key: adminPass }) });
+            await Promise.all(SHOP_TEAMS.flatMap(t => [
+                fetch(SYNC_DB_URL + '/pub/shop/dishes/' + t + '.json', { method: 'DELETE' }),
+                fetch(SYNC_DB_URL + '/pub/shop/guesses/' + t + '.json', { method: 'DELETE' })
+            ]));
+            document.getElementById('shop-admin-actual').value = '';
+        }
+        async function resetShop() {
+            if (!confirm('チーム・料理・予想・金額をすべて消去します。よろしいですか？')) return;
+            try {
+                await clearShopEntries();
+                const res = await fetch(SYNC_DB_URL + '/pub/shop/teams.json', { method: 'DELETE' });
+                if (!res.ok) throw new Error(res.status);
+                shopAdminMsg('リセットしました', true);
+            } catch (e) {
+                shopAdminMsg('リセットに失敗しました', false);
             }
         }
 
@@ -1016,6 +1411,8 @@
             buildStageOptions();
             buildApplePlayers();
             buildTermsPlayers();
+            buildShopPlayers();
+            renderShop();
             renderApple();
             renderAppleAdmin(true);
             try {
