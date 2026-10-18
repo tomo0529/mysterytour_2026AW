@@ -730,10 +730,27 @@
             };
             return es;
         }
+        // つなぎっぱなしにせず、一定間隔で取りに行く（値が変わったときだけ onValue を呼ぶ）
+        function fbPoll(path, onValue, intervalMs) {
+            let last;
+            const tick = async () => {
+                if (document.visibilityState !== 'visible') return;
+                try {
+                    const res = await fetch(SYNC_DB_URL + path + '.json', { cache: 'no-store' });
+                    if (!res.ok) return;
+                    const text = await res.text();
+                    if (text !== last) { last = text; onValue(JSON.parse(text)); }
+                } catch (e) {}
+            };
+            tick();
+            setInterval(tick, intervalMs);
+            return { refetch: tick };
+        }
         function startAppleSync() {
-            // 接続数を抑えるため、参加者が書き込むデータは /pub にまとめて1本で受信
-            //   ※ブラウザは同じサイトへの同時接続が6本までのため
-            appleSources.push(fbSubscribe('/pub', v => {
+            // ブラウザは同じサイトへの「つなぎっぱなし接続」が全タブ合計6本まで。
+            // 複数タブでも詰まらないよう、つなぎっぱなしはステージ番号（/tour/stage）の1本だけにして、
+            // それ以外は数秒おきに取りに行く。画面が裏に回ったら接続を閉じる。
+            const onPub = v => {
                 v = v || {};
                 appleGuesses = v.apple || {};
                 termsAgreed = v.terms || {};
@@ -743,18 +760,19 @@
                 onShopTeams(shop.teams || null);
                 onIntroOrder(v.intro || null);
                 renderApple(); renderTerms(); renderShop();
-            }));
+            };
+            appleSources.push(fbPoll('/pub', onPub, 2000));
             // 幹事の発表データ：実測値が入っている＝発表済み
-            appleSources.push(fbSubscribe('/res/apple/actual', v => {
+            appleSources.push(fbPoll('/res/apple/actual', v => {
                 appleActual = v || {};
                 appleRevealed = Object.keys(appleActual).length > 0;
                 renderApple();
-            }));
-            appleSources.push(fbSubscribe('/res/shop/actual', v => {
+            }, 3000));
+            appleSources.push(fbPoll('/res/shop/actual', v => {
                 shopActual = typeof v === 'number' ? v : null;
                 shopRevealed = shopActual != null;
                 renderShop();
-            }));
+            }, 3000));
         }
         function refreshAppleSync() {
             appleSources.forEach(es => es.refetch());
@@ -1254,6 +1272,8 @@
                     if (document.visibilityState === 'visible') {
                         if (!isPreviewOnly()) { refreshSync(); sendPresence(); }
                         refreshAppleSync();
+                    } else if (syncSource) {
+                        syncSource.close();   // 裏に回ったタブは接続を手放す（戻ったら refreshSync で再接続）
                     }
                 });
             } else {

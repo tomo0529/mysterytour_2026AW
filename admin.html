@@ -275,6 +275,23 @@
             return es;
         }
 
+        // つなぎっぱなしにせず一定間隔で取りに行く（同時接続の上限対策）
+        function poll(path, onValue, intervalMs) {
+            let last;
+            const tick = async () => {
+                if (document.visibilityState !== 'visible') return;
+                try {
+                    const res = await fetch(SYNC_DB_URL + path + '.json', { cache: 'no-store' });
+                    if (!res.ok) return;
+                    const text = await res.text();
+                    if (text !== last) { last = text; onValue(JSON.parse(text)); }
+                } catch (e) {}
+            };
+            tick();
+            setInterval(tick, intervalMs);
+            sources.push({ refetch: tick });
+        }
+
         // ---------- ロック ----------
         async function sha256(text) {
             const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -476,20 +493,31 @@
         // ---------- 起動 ----------
         function start() {
             renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms();
-            const stageEs = subscribe('/tour/stage', v => {
-                const n = parseInt(v, 10);
-                currentStage = stageNames[n] ? n : 1;
-                renderStages();
-            });
-            stageEs.addEventListener('open', () => { $('sync-status').textContent = '● 同期: 接続中'; $('sync-status').className = 'text-[11px] font-bold text-green-600'; });
-            stageEs.addEventListener('error', () => { $('sync-status').textContent = '● 同期: 再接続中…'; $('sync-status').className = 'text-[11px] font-bold text-gray-400'; });
-            subscribe('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); });
-            subscribe('/res/apple/actual', v => { appleActual = v || {}; renderApple(true); });
-            subscribe('/res/shop/actual', v => { shopActual = typeof v === 'number' ? v : null; renderShop(); });
+            // つなぎっぱなしはステージ番号の1本だけ（裏に回ったら閉じて、戻ったら張り直す）
+            let stageEs = null;
+            const openStageStream = () => {
+                if (stageEs) stageEs.close();
+                stageEs = new EventSource(SYNC_DB_URL + '/tour/stage.json');
+                stageEs.addEventListener('put', e => {
+                    const d = JSON.parse(e.data);
+                    if (!d || d.path !== '/') return;
+                    const n = parseInt(d.data, 10);
+                    currentStage = stageNames[n] ? n : 1;
+                    renderStages();
+                });
+                stageEs.addEventListener('open', () => { $('sync-status').textContent = '● 同期: 接続中'; $('sync-status').className = 'text-[11px] font-bold text-green-600'; });
+                stageEs.addEventListener('error', () => { $('sync-status').textContent = '● 同期: 再接続中…'; $('sync-status').className = 'text-[11px] font-bold text-gray-400'; });
+            };
+            openStageStream();
+            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); }, 2000);
+            // リアルタイム受信は /tour/stage と /pub の2本だけ。発表データは数秒おきに取得
+            poll('/res/apple/actual', v => { appleActual = v || {}; renderApple(true); }, 3000);
+            poll('/res/shop/actual', v => { shopActual = typeof v === 'number' ? v : null; renderShop(); }, 3000);
             pollOnline();
             setInterval(pollOnline, 10000);
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') { sources.forEach(es => es.refetch()); pollOnline(); }
+                if (document.visibilityState === 'visible') { openStageStream(); sources.forEach(x => x.refetch()); pollOnline(); }
+                else if (stageEs) stageEs.close();
             });
         }
         document.addEventListener('DOMContentLoaded', () => {
