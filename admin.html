@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex, nofollow">
+    <title>幹事ページ｜秋のミステリーツアー</title>
+    <!-- LINE Seed JP フォントの読み込み（M PLUS 1p は予備） -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=LINE+Seed+JP:wght@400;700;800&family=M+PLUS+1p&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'autumn-bg': '#F5F3ED',
+                        'autumn-text': '#3E3129',
+                        'autumn-accent': '#C86B40',
+                        'autumn-accent-light': '#e0865d',
+                        'card-bg': '#ffffff'
+                    },
+                    fontFamily: {
+                        'sans': ['"LINE Seed JP"', '"M PLUS 1p"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(62, 49, 41, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F5F3ED;
+            color: #3E3129;
+            font-family: "LINE Seed JP", "M PLUS 1p", sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] .chev { transform: rotate(90deg); }
+    </style>
+</head>
+
+<body class="min-h-screen pb-16">
+
+    <header class="bg-autumn-bg/80 backdrop-blur-md sticky top-0 z-40 px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <span class="text-xl">⚙️</span>
+            <h1 class="font-bold text-sm tracking-widest text-autumn-text">幹事ページ</h1>
+        </div>
+        <a href="./" target="_blank" rel="noopener" class="text-xs font-bold text-autumn-accent underline">メンバー画面 ↗</a>
+    </header>
+
+    <main class="w-full max-w-md mx-auto p-5 space-y-5">
+
+        <!-- ========== ロック画面 ========== -->
+        <section id="lock" class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4 mt-10">
+            <p class="text-center text-3xl">🔒</p>
+            <p class="text-center text-sm font-bold text-autumn-text">パスワードを入力してください</p>
+            <div class="flex gap-2">
+                <input type="password" id="pass" inputmode="numeric" autocomplete="off" class="flex-1 min-w-0 bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                <button onclick="unlock()" class="bg-autumn-text text-white text-sm font-bold px-5 rounded-2xl active:scale-95">OK</button>
+            </div>
+            <p id="pass-err" class="hidden text-center text-xs font-bold text-autumn-accent">パスワードが違います</p>
+        </section>
+
+        <!-- ========== 管理画面 ========== -->
+        <div id="dash" class="hidden space-y-5">
+
+            <!-- ステータス -->
+            <section class="bg-card-bg rounded-3xl p-5 shadow-soft space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-autumn-bg rounded-2xl p-3 text-center">
+                        <p class="text-[11px] font-bold text-gray-500">👥 今見てる人</p>
+                        <p class="text-2xl font-extrabold text-autumn-accent"><span id="online-count">－</span><span class="text-sm text-autumn-text ml-0.5">台</span></p>
+                    </div>
+                    <div class="bg-autumn-bg rounded-2xl p-3 text-center">
+                        <p class="text-[11px] font-bold text-gray-500">📍 全員の画面</p>
+                        <p id="current-stage" class="text-sm font-extrabold text-autumn-text mt-1.5 leading-tight">－</p>
+                    </div>
+                </div>
+                <p id="sync-status" class="text-[11px] font-bold text-gray-400">● 同期: 接続中…</p>
+                <button onclick="copyMemberUrl()" class="w-full bg-autumn-bg text-autumn-text font-bold text-xs py-2.5 rounded-xl active:scale-95">🔗 メンバー用URLをコピー</button>
+                <p id="copy-msg" class="hidden text-center text-[11px] font-bold text-autumn-accent">コピーしました！LINEに貼り付けてください</p>
+            </section>
+
+            <!-- ステージ切り替え -->
+            <section class="bg-card-bg rounded-3xl p-5 shadow-soft space-y-3">
+                <h2 class="text-sm font-bold text-autumn-text">📺 ステージ切り替え</h2>
+                <p class="text-[11px] text-gray-500">タップすると全員の画面が切り替わります。「確認」は自分だけで下見（別タブ）。</p>
+                <div id="stage-list" class="space-y-1.5"></div>
+                <p id="stage-err" class="hidden text-[11px] font-bold text-autumn-accent"></p>
+            </section>
+
+            <!-- M0 自己紹介 -->
+            <details class="bg-card-bg rounded-3xl shadow-soft">
+                <summary class="flex items-center justify-between p-5 cursor-pointer">
+                    <span class="text-sm font-bold text-autumn-text">🎤 M0 自己紹介の順番</span>
+                    <span class="chev text-gray-400 transition-transform">›</span>
+                </summary>
+                <div class="px-5 pb-5 space-y-2">
+                    <ol id="intro-list" class="space-y-1 text-xs font-bold"></ol>
+                    <p id="intro-msg" class="hidden text-[11px] font-bold"></p>
+                    <div class="flex gap-2">
+                        <button onclick="redrawIntro()" class="flex-1 bg-autumn-bg text-autumn-text text-xs font-bold py-2 rounded-xl active:scale-95">順番を引き直す</button>
+                        <button onclick="resetIntro()" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">リセット</button>
+                    </div>
+                </div>
+            </details>
+
+            <!-- M3 りんご -->
+            <details class="bg-card-bg rounded-3xl shadow-soft">
+                <summary class="flex items-center justify-between p-5 cursor-pointer">
+                    <span class="text-sm font-bold text-autumn-text">🍎 M3 りんご計測 <span id="apple-state" class="text-[11px] text-gray-400"></span></span>
+                    <span class="chev text-gray-400 transition-transform">›</span>
+                </summary>
+                <div class="px-5 pb-5 space-y-2">
+                    <div id="apple-rows" class="space-y-1.5"></div>
+                    <p id="apple-msg" class="hidden text-[11px] font-bold"></p>
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="saveAppleDraft()" class="flex-1 bg-autumn-bg text-autumn-text text-xs font-bold py-2 rounded-xl active:scale-95">実測を保存</button>
+                        <button onclick="saveAppleResult(true)" class="flex-1 bg-autumn-accent text-white text-xs font-bold py-2 rounded-xl active:scale-95">発表する</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="saveAppleResult(false)" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">発表を取り消す</button>
+                        <button onclick="resetApple()" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">全リセット</button>
+                    </div>
+                </div>
+            </details>
+
+            <!-- M4 買い出し -->
+            <details class="bg-card-bg rounded-3xl shadow-soft">
+                <summary class="flex items-center justify-between p-5 cursor-pointer">
+                    <span class="text-sm font-bold text-autumn-text">🛒 M4 買い出し <span id="shop-state" class="text-[11px] text-gray-400"></span></span>
+                    <span class="chev text-gray-400 transition-transform">›</span>
+                </summary>
+                <div class="px-5 pb-5 space-y-2 text-xs font-bold text-autumn-text">
+                    <div id="shop-info" class="space-y-1.5"></div>
+                    <div class="flex items-center gap-2 pt-1">
+                        <span class="shrink-0">実際の合計</span>
+                        <input type="number" inputmode="numeric" id="shop-actual" placeholder="金額" class="flex-1 min-w-0 bg-autumn-bg rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                        <span class="text-gray-400">円</span>
+                    </div>
+                    <p id="shop-msg" class="hidden text-[11px] font-bold"></p>
+                    <div class="flex gap-2">
+                        <button onclick="saveShopResult(true)" class="flex-1 bg-autumn-accent text-white text-xs font-bold py-2 rounded-xl active:scale-95">結果を発表</button>
+                        <button onclick="saveShopResult(false)" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">発表を取り消す</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="redrawShop()" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">チームを引き直す</button>
+                        <button onclick="resetShop()" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">全リセット</button>
+                    </div>
+                </div>
+            </details>
+
+            <!-- M6 規約 -->
+            <details class="bg-card-bg rounded-3xl shadow-soft">
+                <summary class="flex items-center justify-between p-5 cursor-pointer">
+                    <span class="text-sm font-bold text-autumn-text">📋 M6 利用規約の確認状況</span>
+                    <span class="chev text-gray-400 transition-transform">›</span>
+                </summary>
+                <div class="px-5 pb-5">
+                    <div id="terms-status" class="flex flex-wrap gap-1.5"></div>
+                </div>
+            </details>
+        </div>
+    </main>
+
+    <script>
+        // ==========================================
+        // 設定（index.html と揃えること）
+        // ==========================================
+        const SYNC_DB_URL = 'https://mysterytour2026aw-default-rtdb.asia-southeast1.firebasedatabase.app';
+        const ADMIN_PASS_HASH = '5b10564b32ea564df50f0c56353b0b4ed3821fb86fc4555a4aa2461e76d07473';
+        const stageNames = {
+            1: '事前案内・概要',
+            2: '目的地謎解き',
+            3: '軽井沢 ランチ作戦会議',
+            4: '松井農園 りんご狩り',
+            5: 'ツルヤ 軽井沢店（買い出し）',
+            6: '白糸の滝',
+            7: 'ライジングフィールド軽井沢（発表）',
+            8: 'アスレチック ミッション',
+            9: 'standby1 🚗 移動中',
+            10: 'standby2 🌙 本日の任務完了',
+            11: '自己紹介（仲間を知ろう）'
+        };
+        const STAGE_MENU_ORDER = [9, 10, 1, 11, 2, 3, 4, 5, 6, 7, 8];
+        const STANDBY_STAGES = [9, 10];
+        const PLAYERS = [
+            { id: 'seseri', name: 'せせり' },
+            { id: 'masato', name: 'まさと' },
+            { id: 'jiei',   name: 'じえい' },
+            { id: 'tomo',   name: 'とも' },
+            { id: 'miya',   name: 'みや' },
+            { id: 'ryohe',  name: 'りょへ' }
+        ];
+        const SHOP_TEAMS = ['A', 'B', 'C'];
+        const ONLINE_WINDOW_MS = 70 * 1000;        // この時間内に反応があれば「見てる」
+        const ONLINE_PURGE_MS = 10 * 60 * 1000;    // これより古い記録は掃除
+
+        let adminPass = '';
+        let currentStage = null;
+        let pub = {};              // /pub の中身（apple / terms / intro / shop）
+        let appleActual = {};
+        let shopActual = null;
+
+        // ---------- 共通 ----------
+        const $ = id => document.getElementById(id);
+        const nameOf = id => (PLAYERS.find(p => p.id === id) || { name: id }).name;
+        const stageTag = n => STANDBY_STAGES.includes(n) ? '待機' : n == 1 ? '案内' : n == 11 ? 'M0' : 'M' + (n - 1);
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+        function msg(id, text, ok) {
+            const el = $(id);
+            el.textContent = text;
+            el.className = 'text-[11px] font-bold ' + (ok ? 'text-green-600' : 'text-autumn-accent');
+        }
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+        async function db(path, method = 'GET', body) {
+            const res = await fetch(SYNC_DB_URL + path + '.json', {
+                method, cache: 'no-store', body: body === undefined ? undefined : JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error(res.status);
+            return res.json();
+        }
+
+        // Firebase のストリームを受信して手元のデータに反映
+        function fbApply(root, path, data, isPatch) {
+            const keys = path.split('/').filter(Boolean);
+            const merge = (base, d) => {
+                const o = Object.assign({}, (base && typeof base === 'object') ? base : {}, d);
+                Object.keys(o).forEach(k => { if (o[k] === null) delete o[k]; });
+                return o;
+            };
+            if (!keys.length) return isPatch ? merge(root, data) : data;
+            root = (root && typeof root === 'object') ? Object.assign({}, root) : {};
+            let o = root;
+            keys.slice(0, -1).forEach(k => {
+                o[k] = (o[k] && typeof o[k] === 'object') ? Object.assign({}, o[k]) : {};
+                o = o[k];
+            });
+            const last = keys[keys.length - 1];
+            if (isPatch) o[last] = merge(o[last], data);
+            else if (data === null) delete o[last];
+            else o[last] = data;
+            return root;
+        }
+        const sources = [];
+        function subscribe(path, onValue) {
+            let value = null;
+            const es = new EventSource(SYNC_DB_URL + path + '.json');
+            const handle = isPatch => e => {
+                const d = JSON.parse(e.data);
+                if (!d) return;
+                value = fbApply(value, d.path, d.data, isPatch);
+                onValue(value);
+            };
+            es.addEventListener('put', handle(false));
+            es.addEventListener('patch', handle(true));
+            es.refetch = async () => { try { value = await db(path); onValue(value); } catch (e) {} };
+            sources.push(es);
+            return es;
+        }
+
+        // ---------- ロック ----------
+        async function sha256(text) {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+            return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        async function unlock(saved) {
+            const value = saved ?? $('pass').value.trim();
+            if (await sha256(value) !== ADMIN_PASS_HASH) {
+                if (!saved) { $('pass-err').classList.remove('hidden'); $('pass').select(); }
+                return;
+            }
+            adminPass = value;
+            try { sessionStorage.setItem('adminPass', value); } catch (e) {}
+            $('lock').classList.add('hidden');
+            $('dash').classList.remove('hidden');
+            start();
+        }
+
+        // ---------- ステージ ----------
+        function renderStages() {
+            $('stage-list').innerHTML = STAGE_MENU_ORDER.map(n => {
+                const on = n === currentStage;
+                return `
+                    <div class="flex items-stretch gap-1.5">
+                        <button onclick="selectStage(${n})" class="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold text-left transition-colors active:scale-[0.98] ${on ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-autumn-text'}">
+                            <span class="w-8 shrink-0 text-center opacity-70">${stageTag(n)}</span>
+                            <span class="flex-1">${stageNames[n]}</span>
+                            ${on ? '<span class="text-[10px]">表示中</span>' : ''}
+                        </button>
+                        <a href="./?preview=${n}" target="_blank" rel="noopener" class="shrink-0 flex items-center px-3 rounded-xl bg-autumn-bg text-[10px] font-bold text-gray-500">確認</a>
+                    </div>`;
+            }).join('');
+            $('current-stage').textContent = currentStage ? `${stageTag(currentStage)} ${stageNames[currentStage]}` : '－';
+        }
+        async function selectStage(n) {
+            if (n === currentStage) return;
+            $('stage-err').classList.add('hidden');
+            try {
+                await db('/tour', 'PUT', { stage: n, key: adminPass });
+            } catch (e) {
+                $('stage-err').textContent = '切り替えに失敗しました（通信状況を確認してもう一度）';
+                $('stage-err').classList.remove('hidden');
+            }
+        }
+        function copyMemberUrl() {
+            const url = new URL('./', location.href).toString();
+            const done = () => { $('copy-msg').classList.remove('hidden'); setTimeout(() => $('copy-msg').classList.add('hidden'), 3000); };
+            if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url).then(done).catch(() => prompt('このURLをコピーしてください', url));
+            else prompt('このURLをコピーしてください', url);
+        }
+
+        // ---------- 今見てる人数 ----------
+        async function pollOnline() {
+            try {
+                const o = (await db('/online')) || {};
+                const now = Date.now();
+                const ids = Object.keys(o);
+                $('online-count').textContent = ids.filter(id => now - o[id] < ONLINE_WINDOW_MS).length;
+                // 古い記録を掃除
+                ids.filter(id => now - o[id] > ONLINE_PURGE_MS).forEach(id => db('/online/' + id, 'DELETE').catch(() => {}));
+            } catch (e) {
+                $('online-count').textContent = '?';
+            }
+        }
+
+        // ---------- M0 自己紹介 ----------
+        function renderIntro() {
+            const order = Array.isArray(pub.intro) ? pub.intro : null;
+            $('intro-list').innerHTML = !order ? '<li class="text-gray-400">まだ抽選されていません</li>' :
+                order.map((id, i) => `<li class="bg-autumn-bg rounded-lg px-3 py-1.5">${i + 1}. ${nameOf(id)}</li>`).join('');
+        }
+        async function redrawIntro() {
+            if (!confirm('自己紹介の順番を引き直します。よろしいですか？')) return;
+            try { await db('/pub/intro', 'PUT', shuffle(PLAYERS.map(p => p.id))); msg('intro-msg', '順番を引き直しました', true); }
+            catch (e) { msg('intro-msg', '失敗しました', false); }
+        }
+        async function resetIntro() {
+            if (!confirm('自己紹介の順番を消去して、抽選前に戻します。よろしいですか？')) return;
+            try { await db('/pub/intro', 'DELETE'); msg('intro-msg', 'リセットしました', true); }
+            catch (e) { msg('intro-msg', '失敗しました', false); }
+        }
+
+        // ---------- M3 りんご ----------
+        function appleDraft() {
+            try { return JSON.parse(localStorage.getItem('appleActualDraft') || '{}') || {}; } catch (e) { return {}; }
+        }
+        function renderApple(fillActual) {
+            const guesses = pub.apple || {};
+            const wrap = $('apple-rows');
+            if (!wrap.children.length) {
+                wrap.innerHTML = PLAYERS.map(p => `
+                    <div class="flex items-center gap-2 text-xs font-bold text-autumn-text">
+                        <span class="w-14 shrink-0">${p.name}</span>
+                        <span id="apple-guess-${p.id}" class="w-20 shrink-0 text-gray-400">予想 －</span>
+                        <input type="number" inputmode="numeric" id="apple-actual-${p.id}" placeholder="実測" class="flex-1 min-w-0 bg-autumn-bg rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                        <span class="text-gray-400">g</span>
+                    </div>`).join('');
+                fillActual = true;
+            }
+            PLAYERS.forEach(p => {
+                $('apple-guess-' + p.id).textContent = guesses[p.id] != null ? `予想 ${guesses[p.id]}g` : '予想 －';
+                const input = $('apple-actual-' + p.id);
+                if (fillActual && document.activeElement !== input) input.value = appleActual[p.id] ?? appleDraft()[p.id] ?? '';
+            });
+            const n = Object.keys(guesses).length;
+            $('apple-state').textContent = Object.keys(appleActual).length ? '（発表中）' : `（宣言 ${n}/${PLAYERS.length}）`;
+        }
+        function readAppleActual() {
+            const actual = {};
+            for (const p of PLAYERS) {
+                const v = $('apple-actual-' + p.id).value.trim();
+                if (v === '') continue;
+                const n = parseInt(v, 10);
+                if (!(n >= 0 && n <= 1999)) { msg('apple-msg', `${p.name}の実測値を確認してください`, false); return null; }
+                actual[p.id] = n;
+            }
+            return actual;
+        }
+        function saveAppleDraft() {
+            const actual = readAppleActual();
+            if (!actual) return;
+            try { localStorage.setItem('appleActualDraft', JSON.stringify(actual)); } catch (e) {}
+            msg('apple-msg', '実測をこの端末に保存しました（未発表）', true);
+        }
+        async function saveAppleResult(reveal) {
+            const body = { key: adminPass };
+            if (reveal) {
+                const actual = readAppleActual();
+                if (!actual) return;
+                if (!Object.keys(actual).length) return msg('apple-msg', '実測を1人以上入力してください', false);
+                if (Object.keys(actual).length < PLAYERS.length && !confirm('実測が入っていない人がいます。このまま発表しますか？')) return;
+                body.actual = actual;
+                try { localStorage.setItem('appleActualDraft', JSON.stringify(actual)); } catch (e) {}
+            }
+            try { await db('/res/apple', 'PUT', body); msg('apple-msg', reveal ? '全員の画面に結果を発表しました！' : '発表を取り消しました', true); }
+            catch (e) { msg('apple-msg', '保存に失敗しました', false); }
+        }
+        async function resetApple() {
+            if (!confirm('予想と実測をすべて消去します。よろしいですか？')) return;
+            try {
+                await db('/res/apple', 'PUT', { key: adminPass });   // 先に発表を解除（発表中は予想を消せないため）
+                await Promise.all(PLAYERS.map(p => db('/pub/apple/' + p.id, 'DELETE')));
+                PLAYERS.forEach(p => $('apple-actual-' + p.id).value = '');
+                try { localStorage.removeItem('appleActualDraft'); } catch (e) {}
+                msg('apple-msg', 'リセットしました', true);
+            } catch (e) { msg('apple-msg', 'リセットに失敗しました', false); }
+        }
+
+        // ---------- M4 買い出し ----------
+        function renderShop() {
+            const shop = pub.shop || {};
+            const teams = shop.teams && shop.teams.A ? shop.teams : null;
+            const dishes = shop.dishes || {}, guesses = shop.guesses || {};
+            $('shop-info').innerHTML = !teams ? '<p class="text-gray-400">まだ抽選されていません</p>' :
+                SHOP_TEAMS.map(t => `
+                    <div class="bg-autumn-bg rounded-xl px-3 py-2">
+                        <p>チーム${t}：${(teams[t] || []).map(nameOf).join('・')}</p>
+                        <p class="text-gray-500 font-bold">🍳 ${dishes[t] ? escapeHtml(dishes[t]) : '－'} ／ 💴 ${guesses[t] != null ? guesses[t].toLocaleString() + '円' : '－'}</p>
+                    </div>`).join('');
+            const input = $('shop-actual');
+            if (shopActual != null && input.value === '' && document.activeElement !== input) input.value = shopActual;
+            $('shop-state').textContent = shopActual != null ? '（発表中）' : teams ? `（予想 ${Object.keys(guesses).length}/3）` : '';
+        }
+        async function saveShopResult(reveal) {
+            const n = parseInt($('shop-actual').value.trim(), 10);
+            if (reveal && !(n >= 1 && n < 1000000)) return msg('shop-msg', '実際の合計金額を入力してください', false);
+            try { await db('/res/shop', 'PUT', reveal ? { key: adminPass, actual: n } : { key: adminPass }); msg('shop-msg', reveal ? '全員の画面に結果を発表しました！' : '発表を取り消しました', true); }
+            catch (e) { msg('shop-msg', '保存に失敗しました', false); }
+        }
+        async function clearShopEntries() {
+            await db('/res/shop', 'PUT', { key: adminPass });
+            await Promise.all(SHOP_TEAMS.flatMap(t => [db('/pub/shop/dishes/' + t, 'DELETE'), db('/pub/shop/guesses/' + t, 'DELETE')]));
+            $('shop-actual').value = '';
+        }
+        async function redrawShop() {
+            if (!confirm('チームを引き直します。登録済みの料理と予想は消えます。よろしいですか？')) return;
+            try {
+                await clearShopEntries();
+                const ids = shuffle(PLAYERS.map(p => p.id));
+                await db('/pub/shop/teams', 'PUT', { A: ids.slice(0, 2), B: ids.slice(2, 4), C: ids.slice(4, 6) });
+                msg('shop-msg', 'チームを引き直しました', true);
+            } catch (e) { msg('shop-msg', '失敗しました', false); }
+        }
+        async function resetShop() {
+            if (!confirm('チーム・料理・予想・金額をすべて消去します。よろしいですか？')) return;
+            try { await clearShopEntries(); await db('/pub/shop/teams', 'DELETE'); msg('shop-msg', 'リセットしました', true); }
+            catch (e) { msg('shop-msg', 'リセットに失敗しました', false); }
+        }
+
+        // ---------- M6 規約 ----------
+        function renderTerms() {
+            const agreed = pub.terms || {};
+            $('terms-status').innerHTML = PLAYERS.map(p => {
+                const ok = agreed[p.id] === true;
+                return `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${ok ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-gray-400'}">${ok ? '✓ ' : ''}${p.name}</span>`;
+            }).join('');
+        }
+
+        // ---------- 起動 ----------
+        function start() {
+            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms();
+            const stageEs = subscribe('/tour/stage', v => {
+                const n = parseInt(v, 10);
+                currentStage = stageNames[n] ? n : 1;
+                renderStages();
+            });
+            stageEs.addEventListener('open', () => { $('sync-status').textContent = '● 同期: 接続中'; $('sync-status').className = 'text-[11px] font-bold text-green-600'; });
+            stageEs.addEventListener('error', () => { $('sync-status').textContent = '● 同期: 再接続中…'; $('sync-status').className = 'text-[11px] font-bold text-gray-400'; });
+            subscribe('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); });
+            subscribe('/res/apple/actual', v => { appleActual = v || {}; renderApple(true); });
+            subscribe('/res/shop/actual', v => { shopActual = typeof v === 'number' ? v : null; renderShop(); });
+            pollOnline();
+            setInterval(pollOnline, 10000);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') { sources.forEach(es => es.refetch()); pollOnline(); }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            $('pass').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
+            try { const saved = sessionStorage.getItem('adminPass'); if (saved) unlock(saved); } catch (e) {}
+        });
+    </script>
+</body>
+</html>

@@ -54,11 +54,6 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.45; }
         }
-        /* 幹事メニューのラジオ選択状態 */
-        .stage-option input:checked + span {
-            background-color: #C86B40;
-            color: #fff;
-        }
     </style>
 </head>
 
@@ -558,91 +553,8 @@
 
     </main>
 
-    <!-- ========================================== -->
-    <!-- 幹事コントロールパネル -->
-    <!-- ========================================== -->
-    <button id="admin-toggle" onclick="toggleAdminPanel()" aria-label="幹事メニュー" class="fixed bottom-4 right-4 z-50 w-9 h-9 flex items-center justify-center bg-white/70 backdrop-blur text-base rounded-full shadow-soft opacity-60 hover:opacity-100 active:scale-95 transition">
-        ⚙️
-    </button>
-
-    <div id="admin-overlay" onclick="toggleAdminPanel(false)" class="hidden fixed inset-0 z-50 bg-autumn-text/20"></div>
-
-    <div id="admin-panel" class="hidden fade-in fixed bottom-16 right-4 w-60 z-50 bg-card-bg rounded-2xl shadow-soft p-3 space-y-2 max-h-[70vh] overflow-y-auto">
-        <div class="flex items-center justify-between">
-            <h3 class="font-bold text-xs text-autumn-text">⚙️ 幹事メニュー</h3>
-            <button onclick="toggleAdminPanel(false)" class="text-gray-400 text-base leading-none px-1" aria-label="閉じる">×</button>
-        </div>
-
-        <!-- ロック画面（パスワード入力） -->
-        <div id="admin-lock" class="space-y-2">
-            <p class="text-[10px] text-gray-500">パスワードを入力してください</p>
-            <div class="flex gap-1.5">
-                <input type="password" id="admin-pass" inputmode="numeric" autocomplete="off" class="flex-1 min-w-0 bg-autumn-bg rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
-                <button onclick="unlockAdmin()" class="bg-autumn-text text-white text-[11px] font-bold px-3 rounded-xl active:scale-95">OK</button>
-            </div>
-            <p id="admin-pass-err" class="hidden text-[10px] font-bold text-autumn-accent">パスワードが違います</p>
-        </div>
-
-        <!-- 解除後のメニュー -->
-        <div id="admin-body" class="hidden space-y-2">
-            <p id="sync-status" class="text-[10px] font-bold text-gray-400">● 同期: 未設定（この端末だけ切り替わります）</p>
-            <div id="stage-options" class="space-y-1"></div>
-            <label id="preview-wrap" class="hidden flex items-center gap-1.5 text-[10px] font-bold text-gray-500 cursor-pointer">
-                <input type="checkbox" id="preview-only" onchange="onPreviewToggle()" class="accent-[#C86B40]">
-                自分の画面だけで確認（全員には反映しない）
-            </label>
-            <p id="sync-err" class="hidden text-[10px] font-bold text-autumn-accent"></p>
-            <details id="intro-admin" class="bg-autumn-bg rounded-xl px-2.5 py-2">
-                <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🎤 自己紹介（M0）</summary>
-                <div class="pt-2 space-y-1.5">
-                    <p id="intro-admin-msg" class="hidden text-[10px] font-bold"></p>
-                    <div class="flex gap-1.5">
-                        <button onclick="redrawIntroOrder()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">順番を引き直す</button>
-                        <button onclick="resetIntroOrder()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">リセット</button>
-                    </div>
-                </div>
-            </details>
-            <details id="apple-admin" class="bg-autumn-bg rounded-xl px-2.5 py-2">
-                <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🍎 りんご計測（M3）</summary>
-                <div class="pt-2 space-y-1.5">
-                    <div id="apple-admin-rows" class="space-y-1"></div>
-                    <p id="apple-admin-msg" class="hidden text-[10px] font-bold"></p>
-                    <div class="flex gap-1.5 pt-1">
-                        <button onclick="saveAppleDraft()" class="flex-1 bg-white text-autumn-text text-[10px] font-bold py-1.5 rounded-lg active:scale-95">実測を保存</button>
-                        <button onclick="saveAppleResult(true)" class="flex-1 bg-autumn-accent text-white text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表する</button>
-                    </div>
-                    <div class="flex gap-1.5">
-                        <button onclick="saveAppleResult(false, true)" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表を取り消す</button>
-                        <button onclick="resetApple()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">全リセット</button>
-                    </div>
-                </div>
-            </details>
-            <details id="shop-admin" class="bg-autumn-bg rounded-xl px-2.5 py-2">
-                <summary class="text-[11px] font-bold text-autumn-text cursor-pointer">🛒 買い出し（M4）</summary>
-                <div class="pt-2 space-y-1.5 text-[11px] font-bold text-autumn-text">
-                    <div id="shop-admin-info" class="space-y-1"></div>
-                    <div class="flex items-center gap-1.5 pt-1">
-                        <span class="shrink-0">実際の合計</span>
-                        <input type="number" inputmode="numeric" id="shop-admin-actual" placeholder="金額" class="flex-1 min-w-0 bg-white rounded-lg px-2 py-1 text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
-                        <span class="text-gray-400">円</span>
-                    </div>
-                    <p id="shop-admin-msg" class="hidden text-[10px] font-bold"></p>
-                    <div class="flex gap-1.5">
-                        <button onclick="saveShopResult(true)" class="flex-1 bg-autumn-accent text-white text-[10px] font-bold py-1.5 rounded-lg active:scale-95">結果を発表</button>
-                        <button onclick="saveShopResult(false)" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">発表を取り消す</button>
-                    </div>
-                    <div class="flex gap-1.5">
-                        <button onclick="redrawShopTeams()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">チームを引き直す</button>
-                        <button onclick="resetShop()" class="flex-1 bg-white text-gray-500 text-[10px] font-bold py-1.5 rounded-lg active:scale-95">全リセット</button>
-                    </div>
-                </div>
-            </details>
-            <button onclick="copyStageUrl()" class="w-full bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold text-[11px] py-2 rounded-xl transition-colors active:scale-95">
-                🔗 <span id="copy-label">このステージのURLをコピー</span>
-            </button>
-            <p id="copy-msg" class="hidden text-center text-[10px] font-bold text-autumn-accent">コピーしました！LINEに貼り付けてください</p>
-        </div>
-    </div>
+    <!-- 幹事プレビュー中の表示（?preview=X で開いたときだけ） -->
+    <div id="preview-banner" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-autumn-text text-white text-[11px] font-bold px-4 py-2 rounded-full shadow-lg">👀 幹事プレビュー中（この画面だけ）</div>
 
     <script>
         // ==========================================
@@ -696,10 +608,6 @@
             void target.offsetWidth; // アニメーションを再生し直す
             target.classList.add('fade-in');
 
-            // 幹事メニューのラジオを同期
-            const radio = document.querySelector('input[name="stage"][value="' + n + '"]');
-            if (radio) radio.checked = true;
-
             if (updateUrl && !SYNC_ENABLED) {
                 const url = new URL(location.href);
                 url.searchParams.set('stage', n);
@@ -709,13 +617,13 @@
         }
 
         // ---------- 全員同期 ----------
+        // 幹事ページの「確認」から ?preview=X で開いたときは、全員の画面とは連動しない
+        const PREVIEW_STAGE = (() => {
+            const n = parseInt(new URLSearchParams(location.search).get('preview'), 10);
+            return stageNames[n] ? n : null;
+        })();
         function isPreviewOnly() {
-            return document.getElementById('preview-only').checked;
-        }
-        function setSyncStatus(text, ok) {
-            const el = document.getElementById('sync-status');
-            el.textContent = '● ' + text;
-            el.className = 'text-[10px] font-bold ' + (ok ? 'text-green-600' : 'text-gray-400');
+            return PREVIEW_STAGE !== null;
         }
         // 共有ステージを受け取ったときの処理（変化したときだけ画面を切り替える）
         function applyRemoteStage(n) {
@@ -730,13 +638,9 @@
             if (syncSource) syncSource.close();
             syncSource = new EventSource(SYNC_DB_URL + '/tour/stage.json');
             syncSource.addEventListener('put', e => {
-                setSyncStatus('同期: 接続中（全員に反映されます）', true);
                 const d = JSON.parse(e.data);
                 if (d && d.path === '/') applyRemoteStage(d.data);
             });
-            syncSource.addEventListener('open', () => setSyncStatus('同期: 接続中（全員に反映されます）', true));
-            syncSource.addEventListener('error', () => setSyncStatus('同期: 再接続中…', false));
-            syncSource.addEventListener('cancel', () => setSyncStatus('同期: 読み取り権限がありません', false));
         }
         // スマホでアプリを切り替えて戻ってきたとき、最新のステージを取り直す
         async function refreshSync() {
@@ -746,116 +650,26 @@
             } catch (e) {}
             if (!syncSource || syncSource.readyState === 2) startSync();
         }
-        // 幹事がステージを全員に送信
-        async function publishStage(n) {
-            const err = document.getElementById('sync-err');
-            err.classList.add('hidden');
+        // ---------- 今見てる人数（幹事ページ・ターミナルで確認用） ----------
+        //   各端末がランダムな番号で「開いてるよ」を30秒おきに /online へ送るだけ（名前は送らない）
+        const PRESENCE_ID = (() => {
+            const gen = () => (Math.random().toString(36).slice(2) + '0000000000').slice(0, 10);
             try {
-                const res = await fetch(SYNC_DB_URL + '/tour.json', {
-                    method: 'PUT',
-                    body: JSON.stringify({ stage: n, key: adminPass })
-                });
-                if (!res.ok) throw new Error(res.status);
-            } catch (e) {
-                err.textContent = '全員への反映に失敗しました（通信状況を確認して再度選んでください）';
-                err.classList.remove('hidden');
-            }
+                let id = localStorage.getItem('deviceId');
+                if (!id || !/^[a-z0-9]{6,20}$/.test(id)) { id = gen(); localStorage.setItem('deviceId', id); }
+                return id;
+            } catch (e) { return gen(); }
+        })();
+        function sendPresence() {
+            if (document.visibilityState !== 'visible') return;
+            fetch(SYNC_DB_URL + '/online/' + PRESENCE_ID + '.json', { method: 'PUT', body: JSON.stringify({ '.sv': 'timestamp' }) }).catch(() => {});
         }
-        // 幹事メニューでステージを選んだとき
-        function selectStage(n) {
-            showStage(n);
-            if (SYNC_ENABLED && !isPreviewOnly()) publishStage(n);
-        }
-        // 「自分の画面だけで確認」を外したら、全員の現在ステージに戻る
-        function onPreviewToggle() {
-            if (!isPreviewOnly() && lastRemoteStage) showStage(lastRemoteStage);
-        }
-
-        // 幹事メニューのラジオボタンを生成
-        function buildStageOptions() {
-            const wrap = document.getElementById('stage-options');
-            wrap.innerHTML = STAGE_MENU_ORDER.map(num => [num, stageNames[num]]).map(([num, name]) => `
-                <label class="stage-option block cursor-pointer">
-                    <input type="radio" name="stage" value="${num}" class="sr-only" onchange="selectStage(${num})">
-                    <span class="flex items-center gap-2 bg-autumn-bg rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-autumn-text transition-colors">
-                        <span class="w-7 shrink-0 text-center opacity-70">${STANDBY_STAGES.includes(num) ? '待機' : num == 1 ? '案内' : num == 11 ? 'M0' : 'M' + (num - 1)}</span>${name}
-                    </span>
-                </label>`).join('');
-        }
-
-        // 幹事メニューの開閉
-        function toggleAdminPanel(force) {
-            const panel = document.getElementById('admin-panel');
-            const overlay = document.getElementById('admin-overlay');
-            const open = typeof force === 'boolean' ? force : panel.classList.contains('hidden');
-            panel.classList.toggle('hidden', !open);
-            overlay.classList.toggle('hidden', !open);
-            document.getElementById('copy-msg').classList.add('hidden');
-            if (open && !adminUnlocked) setTimeout(() => document.getElementById('admin-pass').focus(), 50);
-        }
-
-        // ==========================================
-        // 幹事メニューのパスワード
-        //   ソースを覗いてもすぐ分からないよう、SHA-256ハッシュで照合しています。
-        //   変更するときは新しいパスワードのハッシュ値に差し替えてください。
-        // ==========================================
-        const ADMIN_PASS_HASH = '5b10564b32ea564df50f0c56353b0b4ed3821fb86fc4555a4aa2461e76d07473';
-        let adminUnlocked = false;
-        let adminPass = '';
-
-        async function sha256(text) {
-            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-            return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-        function setAdminUnlocked() {
-            adminUnlocked = true;
-            document.getElementById('admin-lock').classList.add('hidden');
-            document.getElementById('admin-body').classList.remove('hidden');
-        }
-        async function unlockAdmin() {
-            const input = document.getElementById('admin-pass');
-            const err = document.getElementById('admin-pass-err');
-            if (await sha256(input.value.trim()) === ADMIN_PASS_HASH) {
-                err.classList.add('hidden');
-                adminPass = input.value.trim();
-                input.value = '';
-                setAdminUnlocked();
-                try { sessionStorage.setItem('adminPass', adminPass); } catch (e) {}
-            } else {
-                err.classList.remove('hidden');
-                input.select();
-            }
-        }
-
-        // 現在ステージのURLをコピー
-        function copyStageUrl() {
-            const url = new URL(location.href);
-            url.hash = '';
-            if (SYNC_ENABLED) url.search = '';           // 同期中は共通URLのみ
-            else url.searchParams.set('stage', currentStage);
-            const text = url.toString();
-            const done = () => {
-                const msg = document.getElementById('copy-msg');
-                msg.classList.remove('hidden');
-                setTimeout(() => msg.classList.add('hidden'), 3000);
-            };
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
-            } else {
-                fallbackCopy(text, done);
-            }
-        }
-        function fallbackCopy(text, done) {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            ta.setAttribute('readonly', '');
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand('copy'); done(); }
-            catch (e) { prompt('このURLをコピーしてください', text); }
-            document.body.removeChild(ta);
+        function startPresence() {
+            sendPresence();
+            setInterval(sendPresence, 30000);
+            window.addEventListener('pagehide', () => {
+                try { fetch(SYNC_DB_URL + '/online/' + PRESENCE_ID + '.json', { method: 'DELETE', keepalive: true }); } catch (e) {}
+            });
         }
 
         // ==========================================
@@ -928,13 +742,13 @@
                 shopGuesses = shop.guesses || {};
                 onShopTeams(shop.teams || null);
                 onIntroOrder(v.intro || null);
-                renderApple(); renderAppleAdmin(false); renderTerms(); renderShop();
+                renderApple(); renderTerms(); renderShop();
             }));
             // 幹事の発表データ：実測値が入っている＝発表済み
             appleSources.push(fbSubscribe('/res/apple/actual', v => {
                 appleActual = v || {};
                 appleRevealed = Object.keys(appleActual).length > 0;
-                renderApple(); renderAppleAdmin(true);
+                renderApple();
             }));
             appleSources.push(fbSubscribe('/res/shop/actual', v => {
                 shopActual = typeof v === 'number' ? v : null;
@@ -1044,87 +858,6 @@
                         <span class="text-sm font-extrabold">${r.diff == null ? '' : '差 ' + r.diff + 'g'}</span>
                     </div>`;
             }).join('');
-        }
-
-        // ---------- 幹事：実測の入力と発表 ----------
-        function renderAppleAdmin(fillActual) {
-            const wrap = document.getElementById('apple-admin-rows');
-            if (!wrap.children.length) {
-                wrap.innerHTML = APPLE_PLAYERS.map(p => `
-                    <div class="flex items-center gap-1.5 text-[11px] font-bold text-autumn-text">
-                        <span class="w-12 shrink-0">${p.name}</span>
-                        <span id="apple-admin-guess-${p.id}" class="w-14 shrink-0 text-gray-400">予想 －</span>
-                        <input type="number" inputmode="numeric" id="apple-admin-actual-${p.id}" placeholder="実測" class="flex-1 min-w-0 bg-white rounded-lg px-2 py-1 text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
-                        <span class="text-gray-400">g</span>
-                    </div>`).join('');
-                fillActual = true;
-            }
-            APPLE_PLAYERS.forEach(p => {
-                const g = appleGuesses[p.id];
-                document.getElementById('apple-admin-guess-' + p.id).textContent = g != null ? `予想 ${g}` : '予想 －';
-                const input = document.getElementById('apple-admin-actual-' + p.id);
-                if (fillActual && document.activeElement !== input) input.value = appleActual[p.id] ?? appleDraft()[p.id] ?? '';
-            });
-        }
-        function appleDraft() {
-            try { return JSON.parse(localStorage.getItem('appleActualDraft') || '{}') || {}; } catch (e) { return {}; }
-        }
-        function showAppleAdminMsg(text, ok) {
-            const el = document.getElementById('apple-admin-msg');
-            el.textContent = text;
-            el.className = 'text-[10px] font-bold ' + (ok ? 'text-green-600' : 'text-autumn-accent');
-        }
-        function readAppleAdminActual() {
-            const actual = {};
-            for (const p of APPLE_PLAYERS) {
-                const v = document.getElementById('apple-admin-actual-' + p.id).value.trim();
-                if (v === '') continue;
-                const n = parseInt(v, 10);
-                if (!(n >= 0 && n <= 1999)) { showAppleAdminMsg(`${p.name}の実測値を確認してください`, false); return null; }
-                actual[p.id] = n;
-            }
-            return actual;
-        }
-        // 「実測を保存」はこの端末にだけ一時保存（発表するまで誰にも見えない）
-        function saveAppleDraft() {
-            const actual = readAppleAdminActual();
-            if (!actual) return;
-            try { localStorage.setItem('appleActualDraft', JSON.stringify(actual)); } catch (e) {}
-            showAppleAdminMsg('実測をこの端末に保存しました（未発表）', true);
-        }
-        async function saveAppleResult(reveal, unreveal = false) {
-            let body = { key: adminPass };
-            if (!unreveal) {
-                const actual = readAppleAdminActual();
-                if (!actual) return;
-                if (!Object.keys(actual).length) return showAppleAdminMsg('実測を1人以上入力してください', false);
-                if (Object.keys(actual).length < APPLE_PLAYERS.length &&
-                    !confirm('実測が入っていない人がいます。このまま発表しますか？')) return;
-                body.actual = actual;
-                try { localStorage.setItem('appleActualDraft', JSON.stringify(actual)); } catch (e) {}
-            }
-            try {
-                const res = await fetch(SYNC_DB_URL + '/res/apple.json', { method: 'PUT', body: JSON.stringify(body) });
-                if (!res.ok) throw new Error(res.status);
-                showAppleAdminMsg(unreveal ? '発表を取り消しました' : '全員の画面に結果を発表しました！', true);
-            } catch (e) {
-                showAppleAdminMsg('保存に失敗しました', false);
-            }
-        }
-        async function resetApple() {
-            if (!confirm('予想と実測をすべて消去します。よろしいですか？')) return;
-            try {
-                // 先に発表状態を解除（発表中は予想の書き換えができないため）
-                const res = await fetch(SYNC_DB_URL + '/res/apple.json', { method: 'PUT', body: JSON.stringify({ key: adminPass }) });
-                if (!res.ok) throw new Error(res.status);
-                await Promise.all(APPLE_PLAYERS.map(p =>
-                    fetch(SYNC_DB_URL + '/pub/apple/' + p.id + '.json', { method: 'DELETE' })));
-                APPLE_PLAYERS.forEach(p => document.getElementById('apple-admin-actual-' + p.id).value = '');
-                try { localStorage.removeItem('appleActualDraft'); } catch (e) {}
-                showAppleAdminMsg('リセットしました', true);
-            } catch (e) {
-                showAppleAdminMsg('リセットに失敗しました', false);
-            }
         }
 
         // ==========================================
@@ -1385,65 +1118,9 @@
                         </div>`;
                 }).join('');
             }
-            renderShopAdmin();
         }
         function escapeHtml(str) {
             return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        }
-
-        // ---------- 幹事 ----------
-        function renderShopAdmin() {
-            const info = document.getElementById('shop-admin-info');
-            info.innerHTML = !shopTeams ? '<p class="text-gray-400">まだ抽選されていません</p>' :
-                SHOP_TEAMS.map(t => `
-                    <div class="bg-white rounded-lg px-2 py-1">
-                        <p>${shopTeamLabel(t)}：${shopMembers(t)}</p>
-                        <p class="text-gray-500">🍳 ${shopDishes[t] ? escapeHtml(shopDishes[t]) : '－'} ／ 💴 ${shopGuesses[t] != null ? shopGuesses[t].toLocaleString() + '円' : '－'}</p>
-                    </div>`).join('');
-            const actualInput = document.getElementById('shop-admin-actual');
-            if (shopActual != null && actualInput.value === '' && document.activeElement !== actualInput) actualInput.value = shopActual;
-        }
-        function shopAdminMsg(text, ok) {
-            const el = document.getElementById('shop-admin-msg');
-            el.textContent = text;
-            el.className = 'text-[10px] font-bold ' + (ok ? 'text-green-600' : 'text-autumn-accent');
-        }
-        async function saveShopResult(reveal) {
-            const n = parseInt(document.getElementById('shop-admin-actual').value.trim(), 10);
-            if (reveal && !(n >= 1 && n < 1000000)) return shopAdminMsg('実際の合計金額を入力してください', false);
-            const body = reveal ? { key: adminPass, actual: n } : { key: adminPass };
-            try {
-                const res = await fetch(SYNC_DB_URL + '/res/shop.json', { method: 'PUT', body: JSON.stringify(body) });
-                if (!res.ok) throw new Error(res.status);
-                shopAdminMsg(reveal ? '全員の画面に結果を発表しました！' : '発表を取り消しました', true);
-            } catch (e) {
-                shopAdminMsg('保存に失敗しました', false);
-            }
-        }
-        async function redrawShopTeams() {
-            if (!confirm('チームを引き直します。登録済みの料理と予想は消えます。よろしいですか？')) return;
-            await clearShopEntries();
-            await drawShopTeams(true);
-            shopAdminMsg('チームを引き直しました', true);
-        }
-        async function clearShopEntries() {
-            await fetch(SYNC_DB_URL + '/res/shop.json', { method: 'PUT', body: JSON.stringify({ key: adminPass }) });
-            await Promise.all(SHOP_TEAMS.flatMap(t => [
-                fetch(SYNC_DB_URL + '/pub/shop/dishes/' + t + '.json', { method: 'DELETE' }),
-                fetch(SYNC_DB_URL + '/pub/shop/guesses/' + t + '.json', { method: 'DELETE' })
-            ]));
-            document.getElementById('shop-admin-actual').value = '';
-        }
-        async function resetShop() {
-            if (!confirm('チーム・料理・予想・金額をすべて消去します。よろしいですか？')) return;
-            try {
-                await clearShopEntries();
-                const res = await fetch(SYNC_DB_URL + '/pub/shop/teams.json', { method: 'DELETE' });
-                if (!res.ok) throw new Error(res.status);
-                shopAdminMsg('リセットしました', true);
-            } catch (e) {
-                shopAdminMsg('リセットに失敗しました', false);
-            }
         }
 
         // ==========================================
@@ -1499,27 +1176,6 @@
             list.classList.toggle('hidden', !introOrder);
             if (introOrder) list.innerHTML = introOrder.map((id, i) => introRow(i, appleName(id))).join('');
         }
-        function introAdminMsg(text, ok) {
-            const el = document.getElementById('intro-admin-msg');
-            el.textContent = text;
-            el.className = 'text-[10px] font-bold ' + (ok ? 'text-green-600' : 'text-autumn-accent');
-        }
-        async function redrawIntroOrder() {
-            if (!confirm('自己紹介の順番を引き直します。よろしいですか？')) return;
-            await drawIntroOrder(true);
-            introAdminMsg('順番を引き直しました', true);
-        }
-        async function resetIntroOrder() {
-            if (!confirm('自己紹介の順番を消去して、抽選前に戻します。よろしいですか？')) return;
-            try {
-                const res = await fetch(SYNC_DB_URL + '/pub/intro.json', { method: 'DELETE' });
-                if (!res.ok) throw new Error(res.status);
-                introAdminMsg('リセットしました', true);
-            } catch (e) {
-                introAdminMsg('リセットに失敗しました', false);
-            }
-        }
-
         // 謎解きの判定処理（ステージ2：2段階）
         //   1段階目: 8Q8W8JVP+34 → 「住所ではない。…さて、どこへたどり着く？」
         //   2段階目: 軽井沢   → 「お見事。本日の旅先は軽井沢です。」
@@ -1578,30 +1234,27 @@
 
         // 初期化
         document.addEventListener('DOMContentLoaded', () => {
-            buildStageOptions();
             buildApplePlayers();
             buildTermsPlayers();
             buildShopPlayers();
             renderShop();
             renderIntro();
             renderApple();
-            renderAppleAdmin(true);
-            try {
-                const saved = sessionStorage.getItem('adminPass');
-                if (saved) sha256(saved).then(h => { if (h === ADMIN_PASS_HASH) { adminPass = saved; setAdminUnlocked(); } });
-            } catch (e) {}
-            document.getElementById('admin-pass').addEventListener('keydown', e => {
-                if (e.key === 'Enter') unlockAdmin();
-            });
             if (SYNC_ENABLED) {
-                showStage(DEFAULT_STAGE, false);
-                document.getElementById('preview-wrap').classList.remove('hidden');
-                document.getElementById('copy-label').textContent = '共通URLをコピー';
-                setSyncStatus('同期: 接続中…', false);
-                startSync();
+                if (isPreviewOnly()) {
+                    showStage(PREVIEW_STAGE, false);
+                    document.getElementById('preview-banner').classList.remove('hidden');
+                } else {
+                    showStage(DEFAULT_STAGE, false);
+                    startSync();
+                    startPresence();
+                }
                 startAppleSync();
                 document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible') { refreshSync(); refreshAppleSync(); }
+                    if (document.visibilityState === 'visible') {
+                        if (!isPreviewOnly()) { refreshSync(); sendPresence(); }
+                        refreshAppleSync();
+                    }
                 });
             } else {
                 showStage(getStageFromUrl(), false);
