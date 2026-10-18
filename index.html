@@ -771,9 +771,12 @@
             appleSources.push(fbPoll('/pub', onPub, 2000));
             // 幹事の発表データ：実測値が入っている＝発表済み
             appleSources.push(fbPoll('/res/apple/actual', v => {
+                const was = appleRevealed;
                 appleActual = v || {};
                 appleRevealed = Object.keys(appleActual).length > 0;
-                renderApple();
+                // 発表された瞬間（M3を表示中なら）は演出付きで見せる
+                if (!was && appleRevealed && document.getElementById('stage-4').offsetParent !== null) playAppleReveal();
+                else renderApple();
             }, 3000));
             appleSources.push(fbPoll('/res/shop/actual', v => {
                 const was = shopRevealed;
@@ -861,6 +864,11 @@
             document.getElementById('apple-result').classList.toggle('hidden', !appleRevealed);
             if (!appleRevealed) return;
 
+            if (!appleRevealAnim) document.getElementById('apple-ranking').innerHTML = appleRankingRows().join('');
+        }
+
+        // ---------- りんご：結果ランキングと発表演出 ----------
+        function appleRankingData() {
             // 差が小さい順に並べる（同じ差は同順位）。未宣言・未計測は最後
             const rows = APPLE_PLAYERS.map(p => {
                 const g = appleGuesses[p.id], a = appleActual[p.id];
@@ -868,24 +876,81 @@
                 return { ...p, g, a, diff };
             }).sort((x, y) => (x.diff ?? Infinity) - (y.diff ?? Infinity));
             let rank = 0, prev = null;
-            document.getElementById('apple-ranking').innerHTML = rows.map((r, i) => {
+            return rows.map((r, i) => {
                 if (r.diff !== prev) { rank = i + 1; prev = r.diff; }
-                const top = r.diff != null && rank === 1;
-                const medal = r.diff == null ? '－' : (['🥇', '🥈', '🥉'][rank - 1] || rank + '位');
-                const detail = r.diff == null
-                    ? `<span class="text-gray-400">${r.g == null ? '未宣言' : '未計測'}</span>`
-                    : `予想 ${r.g}g ／ 実測 ${r.a}g`;
-                return `
-                    <div class="flex items-center gap-3 rounded-2xl px-4 py-3 ${top ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-autumn-text'}">
-                        <span class="w-8 text-center text-lg font-extrabold">${medal}</span>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-bold">${r.name}</p>
-                            <p class="text-[11px] font-bold ${top ? 'text-white/80' : 'text-gray-500'}">${detail}</p>
-                            ${top ? '<p class="text-xs font-extrabold mt-1">🎁 QUOカード 1,000円分 獲得！</p>' : ''}
-                        </div>
-                        <span class="text-sm font-extrabold">${r.diff == null ? '' : '差 ' + r.diff + 'g'}</span>
-                    </div>`;
-            }).join('');
+                return { ...r, rank, top: r.diff != null && rank === 1 };
+            });
+        }
+        // 差額：予想 − 実測（プラス＝重く見積もった、マイナス＝軽く見積もった）
+        function appleSignedDiff(r) {
+            const d = r.g - r.a;
+            return d === 0 ? 'ピッタリ！' : (d > 0 ? '+' : '−') + Math.abs(d) + 'g';
+        }
+        // spinning=true のときは実測と差額を伏せた状態で描画（演出用）
+        function appleRow(r, { hidden = false, spinning = false } = {}) {
+            const medal = r.diff == null ? '－' : (['🥇', '🥈', '🥉'][r.rank - 1] || r.rank + '位');
+            const sub = r.top && !spinning ? 'text-white/80' : 'text-gray-500';
+            const detail = r.diff == null
+                ? `<span class="text-gray-400">${r.g == null ? '未宣言' : '未計測'}</span>`
+                : `予想 ${r.g}g ／ 実測 <span class="apple-actual-num tabular-nums inline-block">${spinning ? '???' : r.a}</span>g`;
+            return `
+                <div class="apple-rank-row flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-500 ${hidden ? 'opacity-0 translate-y-2' : ''} ${r.top && !spinning ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-autumn-text'}" data-id="${r.id}">
+                    <span class="apple-medal w-8 text-center text-lg font-extrabold">${spinning ? '？' : medal}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold">${r.name}</p>
+                        <p class="text-[11px] font-bold ${sub}">${detail}</p>
+                        ${r.top && !spinning ? '<p class="text-xs font-extrabold mt-1">🎁 QUOカード 1,000円分 獲得！</p>' : ''}
+                    </div>
+                    <div class="apple-diff text-right ${spinning ? 'invisible' : ''}">
+                        ${r.diff == null ? '' : `<p class="text-[10px] font-bold ${sub}">差</p><p class="text-sm font-extrabold">${appleSignedDiff(r)}</p>`}
+                    </div>
+                </div>`;
+        }
+        function appleRankingRows() {
+            return appleRankingData().map(r => appleRow(r));
+        }
+        // 発表演出：最下位から1人ずつ、実測のグラムがルーレットで回って止まる
+        let appleRevealAnim = false;
+        function playAppleReveal() {
+            appleRevealAnim = true;
+            renderApple();
+            const wrap = document.getElementById('apple-ranking');
+            const data = appleRankingData();
+            // 先に全員分の枠を（伏せた状態・非表示で）並べておく
+            wrap.innerHTML = data.map(r => appleRow(r, { hidden: true, spinning: true })).join('');
+            const rowEls = [...wrap.querySelectorAll('.apple-rank-row')];
+            const order = data.map((r, i) => i).reverse();   // 最下位から
+            document.getElementById('apple-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            const revealOne = k => {
+                if (k >= order.length) { appleRevealAnim = false; return; }
+                const i = order[k], r = data[i], el = rowEls[i];
+                el.classList.remove('opacity-0', 'translate-y-2');
+                if (r.diff == null) {   // 未宣言・未計測はそのまま表示
+                    el.outerHTML = appleRow(r);
+                    return setTimeout(() => revealOne(k + 1), 500);
+                }
+                const num = el.querySelector('.apple-actual-num');
+                const start = Date.now(), duration = 1300;
+                const spin = () => {
+                    const t = (Date.now() - start) / duration;
+                    if (t >= 1) {
+                        // 確定：順位・色・差額をまとめて表示
+                        const fresh = document.createElement('div');
+                        fresh.innerHTML = appleRow(r).trim();
+                        const done = fresh.firstElementChild;
+                        el.replaceWith(done);
+                        rowEls[i] = done;
+                        const n = done.querySelector('.apple-actual-num');
+                        if (n) { n.classList.add('shop-pop'); }
+                        return setTimeout(() => revealOne(k + 1), r.top ? 900 : 650);
+                    }
+                    num.textContent = Math.floor(50 + Math.random() * 450);
+                    setTimeout(spin, 40 + t * t * 200);
+                };
+                spin();
+            };
+            setTimeout(() => revealOne(0), 400);
         }
 
         // ==========================================
