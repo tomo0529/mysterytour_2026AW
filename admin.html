@@ -62,7 +62,7 @@
             <p class="text-center text-3xl">🔒</p>
             <p class="text-center text-sm font-bold text-autumn-text">パスワードを入力してください</p>
             <div class="flex gap-2">
-                <input type="password" id="pass" inputmode="numeric" autocomplete="off" class="flex-1 min-w-0 bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                <input type="password" id="pass" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
                 <button onclick="unlock()" class="bg-autumn-text text-white text-sm font-bold px-5 rounded-2xl active:scale-95">OK</button>
             </div>
             <p id="pass-err" class="hidden text-center text-xs font-bold text-autumn-accent">パスワードが違います</p>
@@ -175,7 +175,7 @@
         // 設定（index.html と揃えること）
         // ==========================================
         const SYNC_DB_URL = 'https://mysterytour2026aw-default-rtdb.asia-southeast1.firebasedatabase.app';
-        const ADMIN_PASS_HASH = '5b10564b32ea564df50f0c56353b0b4ed3821fb86fc4555a4aa2461e76d07473';
+        const ADMIN_PASS_HASH = '6dfd5e2c8c77018833efd5ecee03ea8b437959e8f0f5cacc069f05ece5ad0ead';
         const stageNames = {
             1: '事前案内・概要',
             2: '目的地謎解き',
