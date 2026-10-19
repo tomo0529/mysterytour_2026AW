@@ -671,16 +671,11 @@
 
     </main>
 
-    <!-- M1クリア時のポップアップ -->
-    <div id="clear-modal" class="hidden fixed inset-0 z-[65] flex items-center justify-center p-6 bg-autumn-text/60 backdrop-blur-sm" onclick="if (event.target === this) closeClearModal()">
-        <div class="clear-pop w-full max-w-sm bg-card-bg rounded-3xl p-7 shadow-2xl text-center space-y-4">
-            <p class="text-5xl">🎉</p>
-            <span class="inline-block px-4 py-1.5 bg-autumn-accent text-white font-extrabold text-sm tracking-widest rounded-full">MISSION CLEAR!</span>
-            <p class="text-2xl font-extrabold text-autumn-text">お見事。</p>
-            <p class="text-base font-bold text-autumn-text">本日の旅先は</p>
-            <p class="text-4xl font-extrabold text-autumn-accent">軽井沢</p>
-            <p class="text-base font-bold text-autumn-text">です。</p>
-            <button onclick="closeClearModal()" class="w-full bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold py-3 rounded-2xl shadow-sm active:scale-95 transition">OK</button>
+    <!-- 発表・クリア時のポップアップ（共通） -->
+    <div id="celebrate-modal" class="hidden fixed inset-0 z-[65] flex items-center justify-center p-6 bg-autumn-text/60 backdrop-blur-sm" onclick="if (event.target === this) closeCelebrate()">
+        <div id="celebrate-card" class="w-full max-w-sm max-h-[85vh] overflow-y-auto bg-card-bg rounded-3xl p-7 shadow-2xl text-center space-y-4">
+            <div id="celebrate-body" class="space-y-3"></div>
+            <button onclick="closeCelebrate()" class="w-full bg-autumn-accent hover:bg-autumn-accent-light text-white font-bold py-3 rounded-2xl shadow-sm active:scale-95 transition">OK</button>
         </div>
     </div>
 
@@ -887,6 +882,7 @@
                 termsAgreed = v.terms || {};
                 const shop = v.shop || {};
                 shopDishes = shop.dishes || {};
+                if (!shopDishesLoaded) { shopDishesAllPrev = SHOP_TEAMS.every(x => shopDishes[x]); shopDishesLoaded = true; }
                 shopGuesses = shop.guesses || {};
                 onShopTeams(shop.teams || null);
                 onIntroOrder(v.intro || null);
@@ -911,6 +907,15 @@
                 if (!was && photoRevealed && document.getElementById('stage-6').offsetParent !== null) {
                     document.getElementById('photo-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
                     playClaps();
+                    const winners = photoTally().filter(r => r.win);
+                    if (winners.length) openCelebrate(`
+                        <p class="text-5xl">📸</p>
+                        ${celebrateBadge('BEST SHOT')}
+                        ${winners.map(w => `
+                            ${w.src ? `<img src="${w.src}" class="w-full rounded-2xl shadow-soft">` : ''}
+                            <p class="text-3xl font-extrabold text-autumn-accent">${appleName(w.id)}</p>
+                            <p class="text-xs font-bold text-gray-500">No.${w.no}・${w.votes}票</p>`).join('')}
+                        <p class="text-lg font-extrabold text-autumn-text">👏 みんなで拍手！ 👏</p>`);
                 }
             }, 3000));
             appleSources.push(fbPoll('/res/shop/actual', v => {
@@ -1058,7 +1063,19 @@
             document.getElementById('apple-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             const revealOne = k => {
-                if (k >= order.length) { appleRevealAnim = false; return; }
+                if (k >= order.length) {
+                    appleRevealAnim = false;
+                    const winners = data.filter(r => r.top);
+                    if (winners.length) setTimeout(() => openCelebrate(`
+                        <p class="text-5xl">🍎</p>
+                        ${celebrateBadge('WINNER')}
+                        <p class="text-sm font-bold text-gray-500">APPLE WEIGHT CHALLENGE 優勝は…</p>
+                        ${winners.map(w => `
+                            <p class="text-3xl font-extrabold text-autumn-accent">${w.name}</p>
+                            <p class="text-xs font-bold text-autumn-text">予想 ${w.g}g ／ 実測 ${w.a}g（${appleSignedDiff(w)}）</p>`).join('')}
+                        <p class="text-base font-extrabold text-autumn-text">🎁 QUOカード 1,000円分 獲得！</p>`), 500);
+                    return;
+                }
                 const i = order[k], r = data[i], el = rowEls[i];
                 el.classList.remove('opacity-0', 'translate-y-2');
                 if (r.diff == null) {   // 未宣言・未計測はそのまま表示
@@ -1149,6 +1166,8 @@
         let shopActual = null;
         let shopRevealed = false;
         let shopAnimating = false;
+        let shopDishesAllPrev = false;   // 料理が3チームそろったか（直前の状態）
+        let shopDishesLoaded = false;    // 初回の読み込みでは発表しない
 
         function shopTeamOf(id) {
             if (!shopTeams || !id) return null;
@@ -1299,6 +1318,18 @@
 
             // 料理：3チームそろうまで中身は伏せる
             const allDishes = SHOP_TEAMS.every(x => shopDishes[x]);
+            if (shopDishesLoaded && allDishes && !shopDishesAllPrev && document.getElementById('stage-5').offsetParent !== null) {
+                openCelebrate(`
+                    <p class="text-5xl">🍳</p>
+                    ${celebrateBadge('TONIGHT\'S MENU')}
+                    <p class="text-sm font-bold text-gray-500">今夜のメニュー発表！</p>
+                    ${SHOP_TEAMS.map(x => `
+                        <div class="bg-autumn-bg rounded-2xl px-4 py-3">
+                            <p class="text-[11px] font-bold text-gray-500">${shopTeamLabel(x)}（${shopMembers(x)}）</p>
+                            <p class="text-lg font-extrabold text-autumn-text">${escapeHtml(shopDishes[x])}</p>
+                        </div>`).join('')}`);
+            }
+            shopDishesAllPrev = allDishes;
             document.getElementById('shop-dish-status').innerHTML = allDishes ? '' :
                 SHOP_TEAMS.map(x => shopChip(shopTeamLabel(x), !!shopDishes[x])).join('');
             const dishesEl = document.getElementById('shop-dishes');
@@ -1387,7 +1418,22 @@
                 rankingEl.innerHTML = shopRankingRows(true).join('');
                 const rows = [...rankingEl.querySelectorAll('.shop-rank-row')].reverse();   // 最下位から
                 rows.forEach((row, i) => setTimeout(() => row.classList.remove('opacity-0', 'translate-y-2'), 600 * i + 100));
-                setTimeout(() => { shopRevealAnim = false; }, 600 * rows.length + 200);
+                setTimeout(() => {
+                    shopRevealAnim = false;
+                    const winners = SHOP_TEAMS.filter(t => shopGuesses[t] != null)
+                        .map(t => ({ t, d: Math.abs(shopGuesses[t] - shopActual) }));
+                    const best = Math.min(...winners.map(w => w.d));
+                    const top = winners.filter(w => w.d === best);
+                    if (top.length) openCelebrate(`
+                        <p class="text-5xl">🏆</p>
+                        ${celebrateBadge('MR. JUST PRICE')}
+                        <p class="text-sm font-bold text-gray-500">お会計 ${shopActual.toLocaleString()}円 に一番近かったのは…</p>
+                        ${top.map(w => `
+                            <p class="text-3xl font-extrabold text-autumn-accent">${shopTeamLabel(w.t)}</p>
+                            <p class="text-sm font-bold text-autumn-text">${shopMembers(w.t)}</p>
+                            <p class="text-xs font-bold text-gray-500">予想 ${shopGuesses[w.t].toLocaleString()}円（${shopSignedDiff(shopGuesses[w.t])}）</p>`).join('')}
+                        <p class="text-base font-extrabold text-autumn-text">ミスター・ジャストプライスの称号獲得！</p>`);
+                }, 600 * rows.length + 500);
             };
             document.getElementById('shop-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
             spin();
@@ -1695,7 +1741,13 @@
             const complete = n === pairs.length;
             document.getElementById('pair-complete').classList.toggle('hidden', !complete);
             // 全組そろった瞬間（M7を表示中なら）は拍手
-            if (complete && !pairCompleteShown && document.getElementById('stage-8').offsetParent !== null) playClaps();
+            if (complete && !pairCompleteShown && document.getElementById('stage-8').offsetParent !== null) {
+                openCelebrate(`
+                    <p class="text-5xl">📷</p>
+                    ${celebrateBadge('MISSION COMPLETE!')}
+                    <p class="text-2xl font-extrabold text-autumn-text">全15組、達成！</p>
+                    <p class="text-sm font-bold text-autumn-text">全員との2ショット、コンプリート！<br>写真はLINEアルバムへ！</p>`);
+            }
             pairCompleteShown = complete;
 
             document.getElementById('pair-grid').innerHTML = pairs.map(x => {
@@ -1729,13 +1781,26 @@
             body.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         function startNazo() { startMission('nazo-start-btn', 'nazo-body'); }
-        // クリア時：画面を少し暗くしてポップアップ＋紙吹雪
-        function openClearModal() {
-            document.getElementById('clear-modal').classList.remove('hidden');
+        // 発表・クリア時：画面を少し暗くしてポップアップ＋紙吹雪（共通）
+        function openCelebrate(html) {
+            document.getElementById('celebrate-body').innerHTML = html;
+            const card = document.getElementById('celebrate-card');
+            card.classList.remove('clear-pop'); void card.offsetWidth; card.classList.add('clear-pop');
+            document.getElementById('celebrate-modal').classList.remove('hidden');
             playConfetti();
         }
-        function closeClearModal() {
-            document.getElementById('clear-modal').classList.add('hidden');
+        function closeCelebrate() {
+            document.getElementById('celebrate-modal').classList.add('hidden');
+        }
+        const celebrateBadge = text => `<span class="inline-block px-4 py-1.5 bg-autumn-accent text-white font-extrabold text-sm tracking-widest rounded-full">${text}</span>`;
+        function openClearModal() {
+            openCelebrate(`
+                <p class="text-5xl">🎉</p>
+                ${celebrateBadge('MISSION CLEAR!')}
+                <p class="text-2xl font-extrabold text-autumn-text">お見事。</p>
+                <p class="text-base font-bold text-autumn-text">本日の旅先は</p>
+                <p class="text-4xl font-extrabold text-autumn-accent">軽井沢</p>
+                <p class="text-base font-bold text-autumn-text">です。</p>`);
         }
         function playConfetti() {
             const colors = ['#C86B40', '#e0865d', '#E8B04B', '#8A9A5B', '#B5452B', '#F2D7A6', '#ffffff'];
