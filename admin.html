@@ -159,6 +159,23 @@
                 </div>
             </details>
 
+            <!-- M5 写真コンテスト -->
+            <details class="bg-card-bg rounded-3xl shadow-soft">
+                <summary class="flex items-center justify-between p-5 cursor-pointer">
+                    <span class="text-sm font-bold text-autumn-text">📸 M5 写真コンテスト <span id="photo-state" class="text-[11px] text-gray-400"></span></span>
+                    <span class="chev text-gray-400 transition-transform">›</span>
+                </summary>
+                <div class="px-5 pb-5 space-y-2 text-xs font-bold text-autumn-text">
+                    <div id="photo-info" class="space-y-1"></div>
+                    <p id="photo-msg" class="hidden text-[11px] font-bold"></p>
+                    <div class="flex gap-2">
+                        <button onclick="savePhotoResult(true)" class="flex-1 bg-autumn-accent text-white text-xs font-bold py-2 rounded-xl active:scale-95">結果を発表</button>
+                        <button onclick="savePhotoResult(false)" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">発表を取り消す</button>
+                    </div>
+                    <button onclick="resetPhoto()" class="w-full bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">全リセット（写真・投票を削除）</button>
+                </div>
+            </details>
+
             <!-- M6 規約 -->
             <details class="bg-card-bg rounded-3xl shadow-soft">
                 <summary class="flex items-center justify-between p-5 cursor-pointer">
@@ -483,6 +500,39 @@
             catch (e) { msg('shop-msg', 'リセットに失敗しました', false); }
         }
 
+        // ---------- M5 写真コンテスト ----------
+        let photoRevealed = false;
+        function renderPhotoAdmin() {
+            const versions = pub.photo || {}, votes = pub.votes || {};
+            const count = {};
+            Object.values(votes).forEach(t => { count[t] = (count[t] || 0) + 1; });
+            $('photo-info').innerHTML = PLAYERS.map(p => `
+                <div class="flex items-center justify-between bg-autumn-bg rounded-lg px-3 py-1.5">
+                    <span>${p.name}</span>
+                    <span class="text-gray-500">${versions[p.id] ? '📷 エントリー済' : '－'} ／ ${votes[p.id] ? '🗳️ 投票済' : '未投票'} ／ 得票 ${count[p.id] || 0}</span>
+                </div>`).join('');
+            $('photo-state').textContent = photoRevealed ? '（発表中）' :
+                `（エントリー ${Object.keys(versions).length}/${PLAYERS.length}・投票 ${Object.keys(votes).length}/${PLAYERS.length}）`;
+        }
+        async function savePhotoResult(reveal) {
+            try {
+                await db('/res/photo', 'PUT', reveal ? { key: adminPass, revealed: true } : { key: adminPass });
+                msg('photo-msg', reveal ? '全員の画面に結果を発表しました！' : '発表を取り消しました', true);
+            } catch (e) { msg('photo-msg', '保存に失敗しました', false); }
+        }
+        async function resetPhoto() {
+            if (!confirm('写真と投票をすべて削除します。よろしいですか？')) return;
+            try {
+                await db('/res/photo', 'PUT', { key: adminPass });   // 先に発表を解除（発表中は消せないため）
+                await Promise.all(PLAYERS.flatMap(p => [
+                    db('/pub/votes/' + p.id, 'DELETE'),
+                    db('/pub/photo/' + p.id, 'DELETE'),
+                    db('/photos/' + p.id, 'DELETE')
+                ]));
+                msg('photo-msg', 'リセットしました', true);
+            } catch (e) { msg('photo-msg', 'リセットに失敗しました', false); }
+        }
+
         // ---------- M6 規約 ----------
         function renderTerms() {
             const agreed = pub.terms || {};
@@ -494,7 +544,7 @@
 
         // ---------- 起動 ----------
         function start() {
-            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms();
+            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms(); renderPhotoAdmin();
             // つなぎっぱなしはステージ番号の1本だけ（裏に回ったら閉じて、戻ったら張り直す）
             let stageEs = null;
             const openStageStream = () => {
@@ -511,7 +561,8 @@
                 stageEs.addEventListener('error', () => { $('sync-status').textContent = '● 同期: 再接続中…'; $('sync-status').className = 'text-[11px] font-bold text-gray-400'; });
             };
             openStageStream();
-            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); }, 2000);
+            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); renderPhotoAdmin(); }, 2000);
+            poll('/res/photo/revealed', v => { photoRevealed = v === true; renderPhotoAdmin(); }, 3000);
             // リアルタイム受信は /tour/stage と /pub の2本だけ。発表データは数秒おきに取得
             poll('/res/apple/actual', v => { appleActual = v || {}; renderApple(true); }, 3000);
             poll('/res/shop/actual', v => { shopActual = typeof v === 'number' ? v : null; renderShop(); }, 3000);
