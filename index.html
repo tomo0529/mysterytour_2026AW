@@ -247,6 +247,7 @@
                         <div id="error-msg" class="hidden mt-2 text-autumn-accent text-xs font-bold text-center">
                             ちがうようです。もう一度考えてみよう！
                         </div>
+                    <button id="explain-btn" onclick="openExplanation()" class="hidden w-full bg-autumn-text text-white font-bold py-3 rounded-2xl shadow-sm active:scale-95 transition">📖 解説を見る</button>
                     </div>
 
                     <!-- 1段階目 正解メッセージ -->
@@ -1800,7 +1801,20 @@
                 <p class="text-2xl font-extrabold text-autumn-text">お見事。</p>
                 <p class="text-base font-bold text-autumn-text">本日の旅先は</p>
                 <p class="text-4xl font-extrabold text-autumn-accent">軽井沢</p>
-                <p class="text-base font-bold text-autumn-text">です。</p>`);
+                <p class="text-base font-bold text-autumn-text">です。</p>
+                <button onclick="openExplanation()" class="w-full bg-autumn-text text-white font-bold py-3 rounded-2xl shadow-sm active:scale-95 transition">📖 解説を見る</button>`);
+        }
+        // 解説画像（explanation.png）を全画面で表示。タップで閉じる
+        function openExplanation() {
+            closeCelebrate();
+            const ov = document.createElement('div');
+            ov.className = 'fixed inset-0 z-[70] bg-black/90 flex flex-col items-center justify-center p-4 gap-3';
+            ov.innerHTML = `
+                <img src="explanation.png" alt="解説" class="max-w-full max-h-[85vh] rounded-xl bg-white"
+                     onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'text-white text-sm font-bold',textContent:'（解説画像 explanation.png を準備中）'}))">
+                <p class="text-white/70 text-xs font-bold">タップで閉じる</p>`;
+            ov.onclick = () => ov.remove();
+            document.body.appendChild(ov);
         }
         function playConfetti() {
             const colors = ['#C86B40', '#e0865d', '#E8B04B', '#8A9A5B', '#B5452B', '#F2D7A6', '#ffffff'];
@@ -1854,6 +1868,7 @@
                 document.getElementById('answer-btn').disabled = true;
                 document.getElementById('answer-btn').classList.add('opacity-50');
                 document.getElementById('answer-btn').textContent = 'クリア！';
+                document.getElementById('explain-btn').classList.remove('hidden');
                 inputEl.blur();
                 openClearModal();
             } else if (nazoStep < 3) {
