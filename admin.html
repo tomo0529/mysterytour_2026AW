@@ -52,7 +52,10 @@
             <span class="text-xl">⚙️</span>
             <h1 class="font-bold text-sm tracking-widest text-autumn-text">幹事ページ</h1>
         </div>
-        <a href="./" target="_blank" rel="noopener" class="text-xs font-bold text-autumn-accent underline">メンバー画面 ↗</a>
+        <div class="flex items-center gap-3">
+            <a href="./" target="_blank" rel="noopener" class="text-xs font-bold text-autumn-accent underline">メンバー画面 ↗</a>
+            <button id="logout-btn" type="button" onclick="logout()" class="hidden text-[11px] font-bold text-gray-500 border border-gray-300 rounded-full px-3 py-1 active:scale-95">ログアウト</button>
+        </div>
     </header>
 
     <main class="w-full max-w-md mx-auto p-5 space-y-5">
@@ -340,7 +343,14 @@
             try { sessionStorage.setItem('adminPass', value); } catch (e) {}
             $('lock').classList.add('hidden');
             $('dash').classList.remove('hidden');
+            $('logout-btn').classList.remove('hidden');
             start();
+        }
+        function logout() {
+            if (!confirm('ログアウトしますか？')) return;
+            adminPass = '';
+            try { sessionStorage.removeItem('adminPass'); } catch (e) {}
+            location.reload();   // 同期・定期取得もまとめて止めてロック画面に戻す
         }
 
         // ---------- ステージ ----------
