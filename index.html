@@ -587,14 +587,44 @@
             <!-- ステージ8：アスレチックでのミッション（2日目） -->
             <!-- ========================================== -->
             <section id="stage-8" class="stage space-y-6 hidden">
-                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4">
+                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-5">
                     <div>
                         <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">MISSION 7</span>
-                        <h3 class="text-lg font-bold text-autumn-text">🦉 OWL ADVENTURE ミッション</h3>
+                        <h3 class="text-lg font-bold text-autumn-text">📷 2ショット・コンプリート</h3>
                     </div>
-                    <div class="bg-autumn-bg rounded-2xl p-5 text-center">
-                        <p class="text-3xl mb-2">🧗</p>
-                        <p class="text-xs text-gray-500 font-bold">このステージの内容は準備中です</p>
+                    <div class="bg-autumn-bg rounded-2xl p-5 text-center space-y-3 text-sm font-bold text-autumn-text leading-relaxed">
+                        <p>冒険を共にした仲間たち。<br>この旅の記念に、<br>全員と2ショットを撮れ！</p>
+                        <p>6人なら組み合わせは全部で15通り。</p>
+                        <p class="text-autumn-accent">1組も残さず、<br>コンプリートせよ！</p>
+                    </div>
+                    <p class="text-[11px] font-bold text-gray-500 text-center">※アスレチック中はスマホをロッカーへ。撮影はコースの前後で！</p>
+
+                    <!-- 進み具合 -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-end justify-between">
+                            <span class="text-xs font-bold text-gray-500">みんなの達成状況</span>
+                            <span class="text-xl font-extrabold text-autumn-accent"><span id="pair-count">0</span><span class="text-sm text-autumn-text"> / 15</span></span>
+                        </div>
+                        <div class="h-3 bg-autumn-bg rounded-full overflow-hidden">
+                            <div id="pair-bar" class="h-full bg-autumn-accent rounded-full transition-all duration-700" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <div id="pair-complete" class="hidden fade-in rounded-2xl bg-autumn-accent text-white p-4 text-center">
+                        <p class="text-lg font-extrabold">🎉 MISSION COMPLETE！</p>
+                        <p class="text-xs font-bold mt-1">全員との2ショット、達成！</p>
+                    </div>
+
+                    <!-- 自分の2ショット -->
+                    <div class="space-y-2">
+                        <label for="pair-name" class="text-xs font-bold text-gray-500 pl-1">自分の名前を選ぶと、まだの相手が分かるよ</label>
+                        <select autocomplete="off" id="pair-name" onchange="renderPairs()" class="w-full bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent appearance-none"></select>
+                        <div id="pair-mine" class="hidden flex flex-wrap gap-1.5"></div>
+                    </div>
+
+                    <!-- 全15組 -->
+                    <div class="space-y-2">
+                        <p class="text-xs font-bold text-gray-500 pl-1">撮れたらタップしてチェック！</p>
+                        <div id="pair-grid" class="grid grid-cols-3 gap-1.5"></div>
                     </div>
                 </div>
             </section>
@@ -641,7 +671,7 @@
             5: 'ツルヤ 軽井沢店（買い出し）',
             6: '白糸の滝',
             7: 'ライジングフィールド軽井沢（発表）',
-            8: 'アスレチック ミッション',
+            8: '2ショット・コンプリート',
             9: 'standby1 🚗 移動中',
             10: 'standby2 🌙 本日の任務完了',
             11: '自己紹介（仲間を知ろう）'
@@ -833,6 +863,7 @@
                 onShopTeams(shop.teams || null);
                 onIntroOrder(v.intro || null);
                 onPhotoPub(v.photo, v.votes);
+                onPairsPub(v.pairs);
                 renderApple(); renderTerms(); renderShop();
             };
             appleSources.push(fbPoll('/pub', onPub, 2000));
@@ -1588,6 +1619,76 @@
             }
         }
 
+        // ==========================================
+        // M7：2ショット・コンプリート（6人の全15組）
+        //   撮れた組を /pub/pairs/{id1_id2} = true で共有（idはAPPLE_PLAYERSの並び順）
+        // ==========================================
+        let pairDone = {};
+        let pairCompleteShown = false;
+        function allPairs() {
+            const list = [];
+            APPLE_PLAYERS.forEach((p, i) => APPLE_PLAYERS.slice(i + 1).forEach(q => list.push({ key: p.id + '_' + q.id, a: p, b: q })));
+            return list;
+        }
+        function buildPairPlayers() {
+            const sel = document.getElementById('pair-name');
+            sel.innerHTML = '<option value="">▼ 名前を選ぶ</option>' +
+                APPLE_PLAYERS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            sel.value = '';
+        }
+        async function togglePair(key) {
+            const done = pairDone[key] === true;
+            const pair = allPairs().find(x => x.key === key);
+            if (done && !confirm(`「${pair.a.name} × ${pair.b.name}」のチェックを外しますか？`)) return;
+            try {
+                const res = await fetch(SYNC_DB_URL + '/pub/pairs/' + key + '.json', done ? { method: 'DELETE' } : { method: 'PUT', body: 'true' });
+                if (!res.ok) throw new Error(res.status);
+                pairDone = Object.assign({}, pairDone);
+                if (done) delete pairDone[key]; else pairDone[key] = true;
+                renderPairs();
+            } catch (e) {
+                alert('送信に失敗しました。電波を確認してもう一度どうぞ');
+            }
+        }
+        let pairsLoaded = false;
+        function onPairsPub(v) {
+            pairDone = v || {};
+            if (!pairsLoaded) {   // 開いた時点ですでに達成済みなら拍手は出さない
+                pairsLoaded = true;
+                pairCompleteShown = allPairs().every(x => pairDone[x.key] === true);
+            }
+            renderPairs();
+        }
+        function renderPairs() {
+            const pairs = allPairs();
+            const n = pairs.filter(x => pairDone[x.key] === true).length;
+            document.getElementById('pair-count').textContent = n;
+            document.getElementById('pair-bar').style.width = (n / pairs.length * 100) + '%';
+            const complete = n === pairs.length;
+            document.getElementById('pair-complete').classList.toggle('hidden', !complete);
+            // 全組そろった瞬間（M7を表示中なら）は拍手
+            if (complete && !pairCompleteShown && document.getElementById('stage-8').offsetParent !== null) playClaps();
+            pairCompleteShown = complete;
+
+            document.getElementById('pair-grid').innerHTML = pairs.map(x => {
+                const ok = pairDone[x.key] === true;
+                return `<button onclick="togglePair('${x.key}')" class="rounded-xl px-1 py-2.5 text-[11px] font-bold leading-tight active:scale-95 transition ${ok ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-autumn-text'}">${ok ? '✓ ' : ''}${x.a.name}<br>× ${x.b.name}</button>`;
+            }).join('');
+
+            const me = document.getElementById('pair-name').value;
+            const mine = document.getElementById('pair-mine');
+            mine.classList.toggle('hidden', !me);
+            if (me) {
+                const rows = pairs.filter(x => x.a.id === me || x.b.id === me);
+                const left = rows.filter(x => pairDone[x.key] !== true).length;
+                mine.innerHTML = `<span class="w-full text-xs font-bold ${left ? 'text-autumn-text' : 'text-green-600'}">${left ? `あと ${left} 人！` : '🎉 あなたは全員と撮影完了！'}</span>` +
+                    rows.map(x => {
+                        const other = x.a.id === me ? x.b : x.a, ok = pairDone[x.key] === true;
+                        return `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${ok ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-gray-400'}">${ok ? '✓ ' : ''}${other.name}</span>`;
+                    }).join('');
+            }
+        }
+
         // 謎解きの判定処理（ステージ2：2段階）
         //   1段階目: 8Q8W8JVP+34 → 「住所ではない。…さて、どこへたどり着く？」
         //   2段階目: 軽井沢   → 「お見事。本日の旅先は軽井沢です。」
@@ -1651,6 +1752,8 @@
             buildShopPlayers();
             buildPhotoPlayers();
             renderPhoto();
+            buildPairPlayers();
+            renderPairs();
             renderShop();
             renderIntro();
             renderApple();

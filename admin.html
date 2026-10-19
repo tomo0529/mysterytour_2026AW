@@ -176,6 +176,20 @@
                 </div>
             </details>
 
+            <!-- M7 2ショット -->
+            <details class="bg-card-bg rounded-3xl shadow-soft">
+                <summary class="flex items-center justify-between p-5 cursor-pointer">
+                    <span class="text-sm font-bold text-autumn-text">📷 M7 2ショット <span id="pair-state" class="text-[11px] text-gray-400"></span></span>
+                    <span class="chev text-gray-400 transition-transform">›</span>
+                </summary>
+                <div class="px-5 pb-5 space-y-2 text-xs font-bold text-autumn-text">
+                    <p class="text-[11px] text-gray-500">まだ撮れていない組</p>
+                    <div id="pair-left" class="flex flex-wrap gap-1.5"></div>
+                    <p id="pair-msg" class="hidden text-[11px] font-bold"></p>
+                    <button onclick="resetPairs()" class="w-full bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">リセット（チェックを全部外す）</button>
+                </div>
+            </details>
+
             <!-- M6 規約 -->
             <details class="bg-card-bg rounded-3xl shadow-soft">
                 <summary class="flex items-center justify-between p-5 cursor-pointer">
@@ -203,7 +217,7 @@
             5: 'ツルヤ 軽井沢店（買い出し）',
             6: '白糸の滝',
             7: 'ライジングフィールド軽井沢（発表）',
-            8: 'アスレチック ミッション',
+            8: '2ショット・コンプリート',
             9: 'standby1 🚗 移動中',
             10: 'standby2 🌙 本日の任務完了',
             11: '自己紹介（仲間を知ろう）'
@@ -533,6 +547,26 @@
             } catch (e) { msg('photo-msg', 'リセットに失敗しました', false); }
         }
 
+        // ---------- M7 2ショット ----------
+        function allPairs() {
+            const list = [];
+            PLAYERS.forEach((p, i) => PLAYERS.slice(i + 1).forEach(q => list.push({ key: p.id + '_' + q.id, a: p, b: q })));
+            return list;
+        }
+        function renderPairsAdmin() {
+            const done = pub.pairs || {};
+            const pairs = allPairs(), left = pairs.filter(x => done[x.key] !== true);
+            $('pair-state').textContent = `（${pairs.length - left.length}/${pairs.length}）`;
+            $('pair-left').innerHTML = left.length
+                ? left.map(x => `<span class="px-2.5 py-1 rounded-full bg-autumn-bg text-[11px]">${x.a.name} × ${x.b.name}</span>`).join('')
+                : '<span class="text-green-600">🎉 コンプリート！</span>';
+        }
+        async function resetPairs() {
+            if (!confirm('2ショットのチェックを全部外します。よろしいですか？')) return;
+            try { await Promise.all(allPairs().map(x => db('/pub/pairs/' + x.key, 'DELETE'))); msg('pair-msg', 'リセットしました', true); }
+            catch (e) { msg('pair-msg', 'リセットに失敗しました', false); }
+        }
+
         // ---------- M6 規約 ----------
         function renderTerms() {
             const agreed = pub.terms || {};
@@ -544,7 +578,7 @@
 
         // ---------- 起動 ----------
         function start() {
-            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms(); renderPhotoAdmin();
+            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin();
             // つなぎっぱなしはステージ番号の1本だけ（裏に回ったら閉じて、戻ったら張り直す）
             let stageEs = null;
             const openStageStream = () => {
@@ -561,7 +595,7 @@
                 stageEs.addEventListener('error', () => { $('sync-status').textContent = '● 同期: 再接続中…'; $('sync-status').className = 'text-[11px] font-bold text-gray-400'; });
             };
             openStageStream();
-            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); renderPhotoAdmin(); }, 2000);
+            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); }, 2000);
             poll('/res/photo/revealed', v => { photoRevealed = v === true; renderPhotoAdmin(); }, 3000);
             // リアルタイム受信は /tour/stage と /pub の2本だけ。発表データは数秒おきに取得
             poll('/res/apple/actual', v => { appleActual = v || {}; renderApple(true); }, 3000);
