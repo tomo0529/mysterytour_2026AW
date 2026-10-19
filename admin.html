@@ -61,10 +61,12 @@
         <section id="lock" class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-4 mt-10">
             <p class="text-center text-3xl">🔒</p>
             <p class="text-center text-sm font-bold text-autumn-text">パスワードを入力してください</p>
-            <div class="flex gap-2">
-                <input type="password" id="pass" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
-                <button onclick="unlock()" class="bg-autumn-text text-white text-sm font-bold px-5 rounded-2xl active:scale-95">OK</button>
-            </div>
+            <!-- パスワードマネージャ（iCloudキーチェーン等）が保存・自動入力できるようにフォームにしている -->
+            <form class="flex gap-2" onsubmit="unlock(); return false;" action="#" method="post">
+                <input type="text" name="username" autocomplete="username" value="kanji" class="hidden" readonly>
+                <input type="password" id="pass" name="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                <button type="submit" class="bg-autumn-text text-white text-sm font-bold px-5 rounded-2xl active:scale-95">OK</button>
+            </form>
             <p id="pass-err" class="hidden text-center text-xs font-bold text-autumn-accent">パスワードが違います</p>
         </section>
 
@@ -521,7 +523,6 @@
             });
         }
         document.addEventListener('DOMContentLoaded', () => {
-            $('pass').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
             try { const saved = sessionStorage.getItem('adminPass'); if (saved) unlock(saved); } catch (e) {}
         });
     </script>
