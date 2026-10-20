@@ -80,6 +80,20 @@
             10% { opacity: 1; }
             100% { transform: translateY(-110vh) rotate(25deg); opacity: 0; }
         }
+        /* 雨天BUページを開いたときの雨 */
+        .raindrop {
+            position: fixed;
+            top: -40px;
+            z-index: 55;
+            pointer-events: none;
+            animation: rainFall linear forwards;
+        }
+        @keyframes rainFall {
+            0% { transform: translate3d(0, 0, 0); opacity: 0; }
+            8% { opacity: 0.9; }
+            85% { opacity: 0.9; }
+            100% { transform: translate3d(-6vw, 110vh, 0); opacity: 0; }
+        }
         /* 金額発表のポンッ */
         .shop-pop { animation: shopPop 0.5s ease-out; }
         @keyframes shopPop {
@@ -792,6 +806,22 @@
                 history.replaceState(null, '', url);
             }
             window.scrollTo({ top: 0 });
+            if (n === 12) playRain();
+        }
+        // 雨天BUページを開いたとき：雨の絵文字を数秒間降らせる
+        function playRain() {
+            document.querySelectorAll('.raindrop').forEach(el => el.remove());
+            for (let i = 0; i < 45; i++) {
+                const el = document.createElement('span');
+                el.className = 'raindrop';
+                el.textContent = ['💧', '💧', '💧', '☔', '🌧️'][i % 5];
+                el.style.left = (Math.random() * 100 + 3) + 'vw';
+                el.style.fontSize = (16 + Math.random() * 16) + 'px';
+                el.style.animationDuration = (1.6 + Math.random() * 1.2) + 's';
+                el.style.animationDelay = (Math.random() * 3) + 's';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 7000);
+            }
         }
 
         // ---------- 全員同期 ----------
