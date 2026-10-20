@@ -190,6 +190,24 @@
                 </div>
             </details>
 
+            <!-- 雨天BU 代替プラン投票 -->
+            <details class="bg-card-bg rounded-3xl shadow-soft">
+                <summary class="flex items-center justify-between p-5 cursor-pointer">
+                    <span class="text-sm font-bold text-autumn-text">🌧️ 雨天BU 代替プラン投票 <span id="bu-state" class="text-[11px] text-gray-400"></span></span>
+                    <span class="chev text-gray-400 transition-transform">›</span>
+                </summary>
+                <div class="px-5 pb-5 space-y-2 text-xs font-bold text-autumn-text">
+                    <div id="bu-voted" class="flex flex-wrap gap-1.5"></div>
+                    <p class="text-[11px] text-gray-500 pt-1">得票数（「決定」を押すと全員の画面で発表。同票なら好きな方を選んでOK）</p>
+                    <div id="bu-info" class="space-y-1.5"></div>
+                    <p id="bu-msg" class="hidden text-[11px] font-bold"></p>
+                    <div class="flex gap-2">
+                        <button onclick="saveBuResult(null)" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">発表を取り消す</button>
+                        <button onclick="resetBu()" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">全リセット</button>
+                    </div>
+                </div>
+            </details>
+
             <!-- M7 2ショット -->
             <details class="bg-card-bg rounded-3xl shadow-soft">
                 <summary class="flex items-center justify-between p-5 cursor-pointer">
@@ -223,9 +241,10 @@
             8: '2ショット・コンプリート',
             9: 'standby1 🚗 移動中',
             10: 'standby2 🌙 本日の任務完了',
-            11: '自己紹介（仲間を知ろう）'
+            11: '自己紹介（仲間を知ろう）',
+            12: '🌧️ 雨天BU：代替プラン投票'
         };
-        const STAGE_MENU_ORDER = [9, 10, 1, 11, 2, 3, 4, 5, 6, 7, 8];
+        const STAGE_MENU_ORDER = [9, 10, 1, 11, 2, 3, 4, 5, 6, 7, 12, 8];
         const STANDBY_STAGES = [9, 10];
         const PLAYERS = [
             { id: 'seseri', name: 'せせり' },
@@ -248,7 +267,7 @@
         // ---------- 共通 ----------
         const $ = id => document.getElementById(id);
         const nameOf = id => (PLAYERS.find(p => p.id === id) || { name: id }).name;
-        const stageTag = n => STANDBY_STAGES.includes(n) ? '待機' : n == 1 ? '案内' : n == 11 ? 'M0' : 'M' + (n - 1);
+        const stageTag = n => STANDBY_STAGES.includes(n) ? '待機' : n == 1 ? '案内' : n == 11 ? 'M0' : n == 12 ? '雨天' : 'M' + (n - 1);
         function escapeHtml(str) {
             return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
@@ -557,6 +576,61 @@
             } catch (e) { msg('photo-msg', 'リセットに失敗しました', false); }
         }
 
+        // ---------- 雨天BU 代替プラン投票 ----------
+        const BU_OPTIONS = [
+            { id: 'trick',  name: '🎨 トリックアートミュージアム軽井沢' },
+            { id: 'outlet', name: '🛍️ 軽井沢・プリンスショッピングプラザ' },
+            { id: 'glass',  name: '🫙 軽井沢ガラス工房' },
+            { id: 'onsen',  name: '♨️ 千ヶ滝温泉' },
+            { id: 'vspark', name: '🎳 VS PARK（レイクタウン）' }
+        ];
+        let buWinner = null;
+        function renderBuAdmin() {
+            const votes = pub.bu || {};
+            const count = {};
+            Object.values(votes).forEach(t => { count[t] = (count[t] || 0) + 1; });
+            const top = Math.max(0, ...BU_OPTIONS.map(o => count[o.id] || 0));
+            $('bu-state').textContent = buWinner ? '（発表中）' : `（投票 ${Object.keys(votes).length}/${PLAYERS.length}）`;
+            $('bu-voted').innerHTML = PLAYERS.map(p => {
+                const ok = !!votes[p.id];
+                return `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${ok ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-gray-400'}">${ok ? '✓ ' : ''}${p.name}</span>`;
+            }).join('');
+            $('bu-info').innerHTML = BU_OPTIONS.map(o => {
+                const n = count[o.id] || 0, lead = top > 0 && n === top, win = buWinner === o.id;
+                const who = PLAYERS.filter(p => votes[p.id] === o.id).map(p => p.name).join('・');
+                return `
+                    <div class="flex items-center gap-2 rounded-lg px-3 py-2 ${win ? 'bg-autumn-accent/15' : 'bg-autumn-bg'}">
+                        <div class="flex-1 min-w-0">
+                            <p class="leading-snug">${o.name}</p>
+                            ${who ? `<p class="text-[10px] text-gray-500">${who}</p>` : ''}
+                        </div>
+                        <span class="shrink-0 ${lead ? 'text-autumn-accent' : 'text-gray-400'}">${n}票${lead ? ' 👑' : ''}</span>
+                        <button onclick="saveBuResult('${o.id}')" class="shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-lg active:scale-95 ${win ? 'bg-autumn-text text-white' : 'bg-autumn-accent text-white'}">${win ? '発表中' : '決定'}</button>
+                    </div>`;
+            }).join('');
+        }
+        async function saveBuResult(id) {
+            if (id) {
+                const o = BU_OPTIONS.find(x => x.id === id);
+                if (!confirm(`「${o.name}」に決定して、全員の画面で発表しますか？`)) return;
+            }
+            try {
+                await db('/res/bu', 'PUT', id ? { key: adminPass, winner: id } : { key: adminPass });
+                buWinner = id;
+                renderBuAdmin();
+                msg('bu-msg', id ? '全員の画面に行き先を発表しました！' : '発表を取り消しました', true);
+            } catch (e) { msg('bu-msg', '保存に失敗しました', false); }
+        }
+        async function resetBu() {
+            if (!confirm('雨天BUの投票と発表をすべて消します。よろしいですか？')) return;
+            try {
+                await db('/res/bu', 'PUT', { key: adminPass });   // 先に発表を解除（発表中は投票を消せないため）
+                await Promise.all(PLAYERS.map(p => db('/pub/bu/' + p.id, 'DELETE')));
+                buWinner = null;
+                msg('bu-msg', 'リセットしました', true);
+            } catch (e) { msg('bu-msg', 'リセットに失敗しました', false); }
+        }
+
         // ---------- M7 2ショット ----------
         function allPairs() {
             const list = [];
@@ -588,7 +662,7 @@
 
         // ---------- 起動 ----------
         function start() {
-            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin();
+            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); renderBuAdmin();
             // つなぎっぱなしはステージ番号の1本だけ（裏に回ったら閉じて、戻ったら張り直す）
             let stageEs = null;
             const openStageStream = () => {
@@ -605,7 +679,8 @@
                 stageEs.addEventListener('error', () => { $('sync-status').textContent = '● 同期: 再接続中…'; $('sync-status').className = 'text-[11px] font-bold text-gray-400'; });
             };
             openStageStream();
-            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); }, 2000);
+            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); renderBuAdmin(); }, 2000);
+            poll('/res/bu/winner', v => { buWinner = BU_OPTIONS.some(o => o.id === v) ? v : null; renderBuAdmin(); }, 3000);
             poll('/res/photo/revealed', v => { photoRevealed = v === true; renderPhotoAdmin(); }, 3000);
             // リアルタイム受信は /tour/stage と /pub の2本だけ。発表データは数秒おきに取得
             poll('/res/apple/actual', v => { appleActual = v || {}; renderApple(true); }, 3000);

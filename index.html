@@ -601,6 +601,51 @@
             </section>
 
             <!-- ========================================== -->
+            <!-- ステージ12：雨天バックアップ（アスレチック中止時の代替プラン投票） -->
+            <!-- ========================================== -->
+            <section id="stage-12" class="stage space-y-6 hidden">
+                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-5">
+                    <div>
+                        <span class="inline-block px-3 py-1 bg-sky-100 text-sky-700 font-bold text-xs rounded-full mb-3">EMERGENCY MISSION</span>
+                        <h3 class="text-lg font-bold text-autumn-text">🌧️ EMERGENCY MISSION：<br>代替プランを決定せよ！</h3>
+                    </div>
+                    <div class="bg-autumn-bg rounded-2xl p-5 text-center space-y-3 text-sm font-bold text-autumn-text leading-relaxed">
+                        <p>残念ながら、<br>天候に恵まれなかった一行。</p>
+                        <p>予定していたアスレチックは、<br>やむを得ず中止となった。</p>
+                        <p>しかし、ここで旅を止めるわけにはいかない！</p>
+                        <p>そこで、雨天時の代替プランを決める<br>緊急ミッションを発動。</p>
+                        <p>用意された候補の中から、<br>行ってみたい場所を選んで投票せよ！</p>
+                        <p>全員の投票によって、<br>次なる目的地が決定する。</p>
+                        <p class="text-autumn-accent">果たして、一行はどこへ向かうのか……？</p>
+                    </div>
+
+                    <div id="bu-entry" class="space-y-4">
+                        <div class="space-y-1">
+                            <label for="bu-name" class="text-xs font-bold text-gray-500 pl-1">自分の名前を選択</label>
+                            <select autocomplete="off" id="bu-name" onchange="onBuNameChange()" class="w-full bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent appearance-none"></select>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="text-xs font-extrabold tracking-widest text-autumn-accent">VOTE ・ 行きたい場所に1票</p>
+                            <p class="text-[11px] font-bold text-gray-500">発表までは何度でも変更OK。誰がどこに入れたかは発表まで秘密！</p>
+                            <div id="bu-options" class="space-y-2"></div>
+                            <p id="bu-msg" class="hidden text-xs font-bold text-center"></p>
+                            <div id="bu-status" class="flex flex-wrap gap-1.5"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 結果発表 -->
+                <div id="bu-result" class="hidden fade-in bg-card-bg rounded-3xl p-6 shadow-soft space-y-4 border-2 border-autumn-accent/20">
+                    <div class="flex justify-between items-start">
+                        <span class="inline-block px-3 py-1 bg-autumn-accent/10 text-autumn-accent font-bold text-xs rounded-full">RESULT</span>
+                        <span class="text-2xl">🧭</span>
+                    </div>
+                    <div id="bu-winner" class="text-center space-y-2"></div>
+                    <div id="bu-ranking" class="space-y-1.5"></div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
             <!-- ステージ8：アスレチックでのミッション（2日目） -->
             <!-- ========================================== -->
             <section id="stage-8" class="stage space-y-6 hidden">
@@ -703,10 +748,11 @@
             8: '2ショット・コンプリート',
             9: 'standby1 🚗 移動中',
             10: 'standby2 🌙 本日の任務完了',
-            11: '自己紹介（仲間を知ろう）'
+            11: '自己紹介（仲間を知ろう）',
+            12: '🌧️ 雨天BU：代替プラン投票'
         };
         // 幹事メニューでの並び順（待機画面を一番上に）
-        const STAGE_MENU_ORDER = [9, 10, 1, 11, 2, 3, 4, 5, 6, 7, 8];
+        const STAGE_MENU_ORDER = [9, 10, 1, 11, 2, 3, 4, 5, 6, 7, 12, 8];
         const STANDBY_STAGES = [9, 10];
         const DEFAULT_STAGE = 1;
         let currentStage = DEFAULT_STAGE;
@@ -894,6 +940,8 @@
                 onIntroOrder(v.intro || null);
                 onPhotoPub(v.photo, v.votes);
                 onPairsPub(v.pairs);
+                buVotes = v.bu || {};
+                renderBu();
                 renderApple(); renderTerms(); renderShop();
             };
             appleSources.push(fbPoll('/pub', onPub, 2000));
@@ -931,6 +979,13 @@
                 // 発表された瞬間（M4を表示中なら）は演出付きで見せる
                 if (!was && shopRevealed && document.getElementById('stage-5').offsetParent !== null) playShopReveal();
                 else renderShop();
+            }, 3000));
+            // 雨天BU：幹事が決定した行き先（入っている＝発表済み）
+            appleSources.push(fbPoll('/res/bu/winner', v => {
+                const was = buWinner;
+                buWinner = BU_OPTIONS.some(o => o.id === v) ? v : null;
+                if (!was && buWinner && document.getElementById('stage-12').offsetParent !== null) playBuReveal();
+                else renderBu();
             }, 3000));
         }
         function refreshAppleSync() {
@@ -1775,6 +1830,126 @@
             }
         }
 
+        // ==========================================
+        // 雨天BU：代替プラン投票（ステージ12）
+        //   投票は /pub/bu/{投票者} = 候補id。幹事が行き先を決めると /res/bu/winner に入る。
+        //   同票のときは幹事がその中から選ぶ。
+        // ==========================================
+        const BU_OPTIONS = [
+            { id: 'trick',  emoji: '🎨', name: 'トリックアートミュージアム軽井沢', q: 'トリックアートミュージアム軽井沢' },
+            { id: 'outlet', emoji: '🛍️', name: '軽井沢・プリンスショッピングプラザ（アウトレット）', q: '軽井沢・プリンスショッピングプラザ' },
+            { id: 'glass',  emoji: '🫙', name: '軽井沢ガラス工房', q: '軽井沢ガラス工房' },
+            { id: 'onsen',  emoji: '♨️', name: '千ヶ滝温泉', q: '千ヶ滝温泉 軽井沢' },
+            { id: 'vspark', emoji: '🎳', name: 'VS PARK（レイクタウン）', q: 'VS PARK イオンレイクタウン' }
+        ];
+        let buVotes = {};      // { 投票者id: 候補id }
+        let buWinner = null;   // 決定した候補id
+        const buOption = id => BU_OPTIONS.find(o => o.id === id);
+        const buMapUrl = o => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(o.q);
+
+        function buildBuPlayers() {
+            const sel = document.getElementById('bu-name');
+            sel.innerHTML = '<option value="">▼ 名前を選ぶ</option>' +
+                APPLE_PLAYERS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            sel.value = '';
+        }
+        function onBuNameChange() {
+            document.getElementById('bu-msg').className = 'hidden';
+            renderBu();
+        }
+        async function voteBu(target) {
+            const id = document.getElementById('bu-name').value;
+            if (!id) return photoMsg('bu-msg', 'まず上で自分の名前を選んでね', false);
+            if (buWinner) return photoMsg('bu-msg', '行き先は決定済みのため変更できません', false);
+            try {
+                const res = await fetch(SYNC_DB_URL + '/pub/bu/' + id + '.json', { method: 'PUT', body: JSON.stringify(target) });
+                if (!res.ok) throw new Error(res.status);
+                buVotes = Object.assign({}, buVotes, { [id]: target });
+                renderBu();
+                photoMsg('bu-msg', `「${buOption(target).name}」に投票したよ！`, true);
+            } catch (e) {
+                photoMsg('bu-msg', '投票に失敗しました。電波を確認してもう一度どうぞ', false);
+            }
+        }
+        function buTally() {
+            const count = {};
+            Object.values(buVotes).forEach(t => { if (buOption(t)) count[t] = (count[t] || 0) + 1; });
+            return BU_OPTIONS.map((o, i) => ({ ...o, i, votes: count[o.id] || 0 }))
+                .sort((a, b) => (b.id === buWinner) - (a.id === buWinner) || b.votes - a.votes || a.i - b.i);
+        }
+        function renderBu() {
+            const me = document.getElementById('bu-name').value;
+            document.getElementById('bu-entry').classList.toggle('hidden', !!buWinner);
+            document.getElementById('bu-options').innerHTML = BU_OPTIONS.map(o => {
+                const mine = buVotes[me] === o.id;
+                return `
+                    <div class="flex items-stretch gap-2">
+                        <button onclick="voteBu('${o.id}')" class="flex-1 flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-bold active:scale-[0.98] transition ${mine ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-autumn-text'}">
+                            <span class="text-2xl">${o.emoji}</span>
+                            <span class="flex-1 leading-snug">${o.name}</span>
+                            ${mine ? '<span class="text-[11px] shrink-0">✓ 投票中</span>' : ''}
+                        </button>
+                        <a href="${buMapUrl(o)}" target="_blank" rel="noopener" class="shrink-0 flex flex-col items-center justify-center px-3 rounded-2xl bg-autumn-bg text-[10px] font-bold text-gray-500">📍<span>地図</span></a>
+                    </div>`;
+            }).join('');
+            document.getElementById('bu-status').innerHTML = '<span class="text-[11px] font-bold text-gray-500 mr-1">投票済み</span>' +
+                APPLE_PLAYERS.map(p => photoChip(p.name, !!buVotes[p.id])).join('');
+
+            document.getElementById('bu-result').classList.toggle('hidden', !buWinner);
+            if (!buWinner) return;
+            const w = buOption(buWinner), rows = buTally();
+            document.getElementById('bu-winner').innerHTML = `
+                <p class="text-xs font-extrabold tracking-widest text-autumn-accent">🧭 NEXT DESTINATION</p>
+                <p class="text-4xl">${w.emoji}</p>
+                <p class="text-xl font-extrabold text-autumn-text leading-snug">${w.name}</p>
+                <a href="${buMapUrl(w)}" target="_blank" rel="noopener" class="inline-block text-xs font-bold text-autumn-accent underline">📍 地図で見る</a>`;
+            document.getElementById('bu-ranking').innerHTML = rows.map(r => {
+                const voters = APPLE_PLAYERS.filter(p => buVotes[p.id] === r.id).map(p => p.name).join('・');
+                return `
+                    <div class="flex items-center gap-2 rounded-xl px-3 py-2 ${r.id === buWinner ? 'bg-autumn-accent/10' : 'bg-autumn-bg'}">
+                        <span class="text-lg">${r.emoji}</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-autumn-text leading-snug">${r.name}</p>
+                            ${voters ? `<p class="text-[10px] font-bold text-gray-500">${voters}</p>` : ''}
+                        </div>
+                        <span class="text-sm font-extrabold ${r.id === buWinner ? 'text-autumn-accent' : 'text-gray-400'}">${r.votes}票</span>
+                    </div>`;
+            }).join('');
+        }
+        // 発表の瞬間：候補がルーレットのように回って、行き先で止まる
+        function playBuReveal() {
+            renderBu();
+            const w = buOption(buWinner);
+            openCelebrate(`
+                <p class="text-xs font-extrabold tracking-widest text-gray-500">次なる目的地は……</p>
+                <div class="h-28 flex flex-col items-center justify-center">
+                    <p id="bu-spin-emoji" class="text-5xl">❔</p>
+                    <p id="bu-spin-name" class="text-base font-extrabold text-autumn-text leading-snug mt-2">？？？</p>
+                </div>`);
+            document.querySelectorAll('.confetti').forEach(el => el.remove());   // 紙吹雪は止まってから
+            const seq = [];
+            let delay = 70, idx = 0;
+            while (delay < 520) { seq.push(delay); delay *= 1.12; }
+            const startIdx = (BU_OPTIONS.indexOf(w) - seq.length % BU_OPTIONS.length + BU_OPTIONS.length * 10) % BU_OPTIONS.length;
+            let t = 0;
+            seq.forEach((d, k) => {
+                t += d;
+                setTimeout(() => {
+                    const o = BU_OPTIONS[(startIdx + k + 1) % BU_OPTIONS.length];
+                    const e = document.getElementById('bu-spin-emoji'), n = document.getElementById('bu-spin-name');
+                    if (e) { e.textContent = o.emoji; n.textContent = o.name; }
+                }, t);
+            });
+            setTimeout(() => {
+                openCelebrate(`
+                    <p class="text-5xl">${w.emoji}</p>
+                    ${celebrateBadge('NEXT DESTINATION')}
+                    <p class="text-2xl font-extrabold text-autumn-accent leading-snug">${w.name}</p>
+                    <p class="text-sm font-bold text-autumn-text">緊急ミッション、完了！<br>いざ、次なる目的地へ！</p>`);
+                document.getElementById('bu-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, t + 700);
+        }
+
         // 謎解きの判定処理（ステージ2：2段階）
         //   1段階目: 8Q8W8JVP+34 → 「住所ではない。…さて、どこへたどり着く？」
         //   2段階目: 軽井沢   → 「お見事。本日の旅先は軽井沢です。」
@@ -1891,6 +2066,8 @@
             renderPhoto();
             buildPairPlayers();
             renderPairs();
+            buildBuPlayers();
+            renderBu();
             renderShop();
             renderIntro();
             renderApple();
