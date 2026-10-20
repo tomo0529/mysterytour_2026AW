@@ -982,9 +982,11 @@
             }, 3000));
             // 雨天BU：幹事が決定した行き先（入っている＝発表済み）
             appleSources.push(fbPoll('/res/bu/winner', v => {
-                const was = buWinner;
+                const was = buWinner, first = !buLoaded;
+                buLoaded = true;
                 buWinner = BU_OPTIONS.some(o => o.id === v) ? v : null;
-                if (!was && buWinner && document.getElementById('stage-12').offsetParent !== null) playBuReveal();
+                // 開いた時点ですでに決定済みなら演出は出さない（発表の瞬間に見ていた人だけ）
+                if (!first && !was && buWinner && document.getElementById('stage-12').offsetParent !== null) playBuReveal();
                 else renderBu();
             }, 3000));
         }
@@ -1836,14 +1838,27 @@
         //   同票のときは幹事がその中から選ぶ。
         // ==========================================
         const BU_OPTIONS = [
-            { id: 'trick',  emoji: '🎨', name: 'トリックアートミュージアム軽井沢', q: 'トリックアートミュージアム軽井沢' },
-            { id: 'outlet', emoji: '🛍️', name: '軽井沢・プリンスショッピングプラザ（アウトレット）', q: '軽井沢・プリンスショッピングプラザ' },
-            { id: 'glass',  emoji: '🫙', name: '軽井沢ガラス工房', q: '軽井沢ガラス工房' },
-            { id: 'onsen',  emoji: '♨️', name: '千ヶ滝温泉', q: '千ヶ滝温泉 軽井沢' },
-            { id: 'vspark', emoji: '🎳', name: 'VS PARK（レイクタウン）', q: 'VS PARK イオンレイクタウン' }
+            { id: 'trick',  emoji: '🎨', name: 'トリックアートミュージアム軽井沢', q: 'トリックアートミュージアム軽井沢',
+              url: 'https://art-karuizawa.com/',
+              desc: '旧軽井沢の商店街にあるトリックアート館。名画の世界に入り込んだような写真が撮れる！鏡の迷路も。見学は30分〜1時間半くらい' },
+            { id: 'outlet', emoji: '🛍️', name: '軽井沢・プリンスショッピングプラザ（アウトレット）', q: '軽井沢・プリンスショッピングプラザ',
+              url: 'https://www.karuizawa-psp.jp/',
+              desc: '軽井沢駅のすぐそばにある大型アウトレット。ブランド・雑貨・アウトドアなど約200店舗' },
+            { id: 'glass',  emoji: '🫙', name: '軽井沢ガラス工房', q: '軽井沢ガラス工房',
+              url: 'https://www.karuizawaglassstudio.com/',
+              desc: '吹きガラスやサンドブラストなど、自分だけのガラス作品を作れる体験工房',
+              note: '※当日予約が取れれば！' },
+            { id: 'onsen',  emoji: '♨️', name: '千ヶ滝温泉', q: '千ヶ滝温泉 軽井沢',
+              url: 'https://www.princehotels.co.jp/sengataki/',
+              desc: '千ヶ滝の自然に囲まれた立ち寄り湯。やわらかく澄んだお湯で、冷えた体をまったり温めよう' },
+            { id: 'vspark', emoji: '🎳', name: 'VS PARK（レイクタウン）', q: 'VS PARK イオンレイクタウン',
+              url: 'https://bandainamco-am.co.jp/others/vspark/',
+              desc: 'バラエティ番組みたいな対戦アクティビティが24種類以上そろう屋内パーク。みんなでガチ対決！',
+              note: '※軽井沢を出ちゃうけど…（帰り道に寄る案）' }
         ];
         let buVotes = {};      // { 投票者id: 候補id }
         let buWinner = null;   // 決定した候補id
+        let buLoaded = false;
         const buOption = id => BU_OPTIONS.find(o => o.id === id);
         const buMapUrl = o => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(o.q);
 
@@ -1886,10 +1901,17 @@
                     <div class="flex items-stretch gap-2">
                         <button onclick="voteBu('${o.id}')" class="flex-1 flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-bold active:scale-[0.98] transition ${mine ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-autumn-text'}">
                             <span class="text-2xl">${o.emoji}</span>
-                            <span class="flex-1 leading-snug">${o.name}</span>
+                            <span class="flex-1 min-w-0">
+                                <span class="block leading-snug">${o.name}</span>
+                                <span class="block text-[11px] font-bold leading-snug mt-1 ${mine ? 'text-white/85' : 'text-gray-500'}">${o.desc}</span>
+                                ${o.note ? `<span class="block text-[11px] font-extrabold leading-snug mt-1 ${mine ? 'text-white' : 'text-autumn-accent'}">${o.note}</span>` : ''}
+                            </span>
                             ${mine ? '<span class="text-[11px] shrink-0">✓ 投票中</span>' : ''}
                         </button>
-                        <a href="${buMapUrl(o)}" target="_blank" rel="noopener" class="shrink-0 flex flex-col items-center justify-center px-3 rounded-2xl bg-autumn-bg text-[10px] font-bold text-gray-500">📍<span>地図</span></a>
+                        <div class="shrink-0 w-12 flex flex-col gap-1.5">
+                            <a href="${o.url}" target="_blank" rel="noopener" class="flex-1 flex flex-col items-center justify-center rounded-2xl bg-autumn-bg text-[10px] font-bold text-gray-500">🌐<span>公式</span></a>
+                            <a href="${buMapUrl(o)}" target="_blank" rel="noopener" class="flex-1 flex flex-col items-center justify-center rounded-2xl bg-autumn-bg text-[10px] font-bold text-gray-500">📍<span>地図</span></a>
+                        </div>
                     </div>`;
             }).join('');
             document.getElementById('bu-status').innerHTML = '<span class="text-[11px] font-bold text-gray-500 mr-1">投票済み</span>' +
@@ -1902,7 +1924,12 @@
                 <p class="text-xs font-extrabold tracking-widest text-autumn-accent">🧭 NEXT DESTINATION</p>
                 <p class="text-4xl">${w.emoji}</p>
                 <p class="text-xl font-extrabold text-autumn-text leading-snug">${w.name}</p>
-                <a href="${buMapUrl(w)}" target="_blank" rel="noopener" class="inline-block text-xs font-bold text-autumn-accent underline">📍 地図で見る</a>`;
+                <p class="text-xs font-bold text-gray-500 leading-relaxed">${w.desc}</p>
+                ${w.note ? `<p class="text-xs font-extrabold text-autumn-accent">${w.note}</p>` : ''}
+                <div class="flex justify-center gap-4">
+                    <a href="${w.url}" target="_blank" rel="noopener" class="text-xs font-bold text-autumn-accent underline">🌐 公式サイト</a>
+                    <a href="${buMapUrl(w)}" target="_blank" rel="noopener" class="text-xs font-bold text-autumn-accent underline">📍 地図で見る</a>
+                </div>`;
             document.getElementById('bu-ranking').innerHTML = rows.map(r => {
                 const voters = APPLE_PLAYERS.filter(p => buVotes[p.id] === r.id).map(p => p.name).join('・');
                 return `
