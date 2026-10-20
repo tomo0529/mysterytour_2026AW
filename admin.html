@@ -190,8 +190,22 @@
                 </div>
             </details>
 
-            <!-- 雨天BU 代替プラン投票 -->
+            <!-- M7 2ショット -->
             <details class="bg-card-bg rounded-3xl shadow-soft">
+                <summary class="flex items-center justify-between p-5 cursor-pointer">
+                    <span class="text-sm font-bold text-autumn-text">📷 M7 2ショット <span id="pair-state" class="text-[11px] text-gray-400"></span></span>
+                    <span class="chev text-gray-400 transition-transform">›</span>
+                </summary>
+                <div class="px-5 pb-5 space-y-2 text-xs font-bold text-autumn-text">
+                    <p class="text-[11px] text-gray-500">まだ撮れていない組</p>
+                    <div id="pair-left" class="flex flex-wrap gap-1.5"></div>
+                    <p id="pair-msg" class="hidden text-[11px] font-bold"></p>
+                    <button onclick="resetPairs()" class="w-full bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">リセット（チェックを全部外す）</button>
+                </div>
+            </details>
+
+            <!-- 雨天BU 代替プラン投票 -->
+            <details class="bg-card-bg rounded-3xl shadow-soft !mt-8">
                 <summary class="flex items-center justify-between p-5 cursor-pointer">
                     <span class="text-sm font-bold text-autumn-text">🌧️ 雨天BU 代替プラン投票 <span id="bu-state" class="text-[11px] text-gray-400"></span></span>
                     <span class="chev text-gray-400 transition-transform">›</span>
@@ -205,20 +219,6 @@
                         <button onclick="saveBuResult(null)" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">発表を取り消す</button>
                         <button onclick="resetBu()" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">全リセット</button>
                     </div>
-                </div>
-            </details>
-
-            <!-- M7 2ショット -->
-            <details class="bg-card-bg rounded-3xl shadow-soft">
-                <summary class="flex items-center justify-between p-5 cursor-pointer">
-                    <span class="text-sm font-bold text-autumn-text">📷 M7 2ショット <span id="pair-state" class="text-[11px] text-gray-400"></span></span>
-                    <span class="chev text-gray-400 transition-transform">›</span>
-                </summary>
-                <div class="px-5 pb-5 space-y-2 text-xs font-bold text-autumn-text">
-                    <p class="text-[11px] text-gray-500">まだ撮れていない組</p>
-                    <div id="pair-left" class="flex flex-wrap gap-1.5"></div>
-                    <p id="pair-msg" class="hidden text-[11px] font-bold"></p>
-                    <button onclick="resetPairs()" class="w-full bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">リセット（チェックを全部外す）</button>
                 </div>
             </details>
         </div>
@@ -244,7 +244,7 @@
             11: '自己紹介（仲間を知ろう）',
             12: '🌧️ 雨天BU：代替プラン投票'
         };
-        const STAGE_MENU_ORDER = [9, 10, 1, 11, 2, 3, 4, 5, 6, 7, 12, 8];
+        const STAGE_MENU_ORDER = [9, 10, 1, 11, 2, 3, 4, 5, 6, 7, 8, 12];
         const STANDBY_STAGES = [9, 10];
         const PLAYERS = [
             { id: 'seseri', name: 'せせり' },
@@ -377,7 +377,7 @@
             $('stage-list').innerHTML = STAGE_MENU_ORDER.map(n => {
                 const on = n === currentStage;
                 return `
-                    <div class="flex items-stretch gap-1.5">
+                    <div class="flex items-stretch gap-1.5 ${n === 12 ? '!mt-5' : ''}">
                         <button onclick="selectStage(${n})" class="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold text-left transition-colors active:scale-[0.98] ${on ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-autumn-text'}">
                             <span class="w-8 shrink-0 text-center opacity-70">${stageTag(n)}</span>
                             <span class="flex-1">${stageNames[n]}</span>
