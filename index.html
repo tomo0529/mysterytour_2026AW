@@ -295,6 +295,54 @@
                         <p class="text-autumn-accent">全員の胃袋を満たす<br>最高のランチを決定せよ！</p>
                     </div>
                 </div>
+
+                <!-- 決選投票 -->
+                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-5">
+                    <div>
+                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">FINAL VOTE</span>
+                        <h3 class="text-lg font-bold text-autumn-text">⚔️ ランチ決選投票</h3>
+                        <p class="text-xs font-bold text-gray-500 mt-1">候補を2つに絞ったら、ここで一騎打ち！</p>
+                    </div>
+
+                    <div id="lunch-entry" class="space-y-5">
+                        <!-- STEP 1 候補 -->
+                        <div class="space-y-2">
+                            <p class="text-xs font-extrabold tracking-widest text-autumn-accent">STEP 1 ・ 候補を入力</p>
+                            <div id="lunch-setup" class="space-y-2">
+                                <input id="lunch-opt-A" type="text" maxlength="30" autocomplete="off" placeholder="候補A（例：○○そば）" class="w-full bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                                <p class="text-center text-xs font-extrabold text-gray-400">VS</p>
+                                <input id="lunch-opt-B" type="text" maxlength="30" autocomplete="off" placeholder="候補B（例：△△カフェ）" class="w-full bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                                <button id="lunch-set-btn" onclick="setLunchOptions()" class="w-full bg-autumn-text text-white font-bold py-3 rounded-2xl shadow-sm active:scale-95 transition">この2つで決選投票！</button>
+                            </div>
+                            <div id="lunch-vs" class="hidden space-y-2">
+                                <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-center">
+                                    <p id="lunch-vs-A" class="bg-autumn-bg rounded-2xl px-2 py-3 text-sm font-extrabold text-autumn-text break-words"></p>
+                                    <p class="text-xs font-extrabold text-autumn-accent">VS</p>
+                                    <p id="lunch-vs-B" class="bg-autumn-bg rounded-2xl px-2 py-3 text-sm font-extrabold text-autumn-text break-words"></p>
+                                </div>
+                                <button id="lunch-edit-btn" onclick="editLunchOptions()" class="w-full text-[11px] font-bold text-gray-500 underline">候補を変える（誰かが投票するまでOK）</button>
+                            </div>
+                            <p id="lunch-set-msg" class="hidden text-xs font-bold text-center"></p>
+                        </div>
+
+                        <!-- STEP 2 投票 -->
+                        <div id="lunch-vote-area" class="hidden space-y-2">
+                            <p class="text-xs font-extrabold tracking-widest text-autumn-accent">STEP 2 ・ 食べたい方に1票</p>
+                            <select autocomplete="off" id="lunch-name" onchange="onLunchNameChange()" class="w-full bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent appearance-none"></select>
+                            <div id="lunch-vote-btns" class="grid grid-cols-2 gap-2"></div>
+                            <p class="text-[11px] font-bold text-gray-500 text-center">発表までは変更OK・どっちに入れたかは発表まで秘密！</p>
+                            <p id="lunch-msg" class="hidden text-xs font-bold text-center"></p>
+                            <div id="lunch-status" class="flex flex-wrap gap-1.5"></div>
+                        </div>
+                    </div>
+
+                    <!-- 結果 -->
+                    <div id="lunch-result" class="hidden fade-in space-y-3 text-center">
+                        <p class="text-xs font-extrabold tracking-widest text-autumn-accent">🍽️ 本日のランチは……</p>
+                        <p id="lunch-winner" class="text-2xl font-extrabold text-autumn-text break-words"></p>
+                        <div id="lunch-ranking" class="space-y-1.5 text-left"></div>
+                    </div>
+                </div>
             </section>
 
             <!-- ========================================== -->
@@ -972,6 +1020,10 @@
                 onPairsPub(v.pairs);
                 buVotes = v.bu || {};
                 renderBu();
+                const lunch = v.lunch || {};
+                lunchOptions = lunch.options && lunch.options.A && lunch.options.B ? lunch.options : null;
+                lunchVotes = lunch.votes || {};
+                renderLunch();
                 renderApple(); renderTerms(); renderShop();
             };
             appleSources.push(fbPoll('/pub', onPub, 2000));
@@ -1009,6 +1061,14 @@
                 // 発表された瞬間（M4を表示中なら）は演出付きで見せる
                 if (!was && shopRevealed && document.getElementById('stage-5').offsetParent !== null) playShopReveal();
                 else renderShop();
+            }, 3000));
+            // M2 ランチ決選投票：幹事が決定した方（入っている＝発表済み）
+            appleSources.push(fbPoll('/res/lunch/winner', v => {
+                const was = lunchWinner, first = !lunchLoaded;
+                lunchLoaded = true;
+                lunchWinner = v === 'A' || v === 'B' ? v : null;
+                if (!first && !was && lunchWinner && document.getElementById('stage-3').offsetParent !== null) playLunchReveal();
+                else renderLunch();
             }, 3000));
             // 雨天BU：幹事が決定した行き先（入っている＝発表済み）
             appleSources.push(fbPoll('/res/bu/winner', v => {
@@ -1863,6 +1923,134 @@
         }
 
         // ==========================================
+        // M2 ランチ決選投票
+        //   候補は /pub/lunch/options {A, B}（誰かが投票するまで変更OK）
+        //   投票は /pub/lunch/votes/{投票者} = 'A' | 'B'。幹事が決めると /res/lunch/winner に入る。
+        // ==========================================
+        let lunchOptions = null;   // { A: 'お店', B: 'お店' }
+        let lunchVotes = {};
+        let lunchWinner = null;
+        let lunchLoaded = false;
+        let lunchEditing = false;
+        function buildLunchPlayers() {
+            const sel = document.getElementById('lunch-name');
+            sel.innerHTML = '<option value="">▼ 名前を選ぶ</option>' +
+                APPLE_PLAYERS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            sel.value = '';
+        }
+        function onLunchNameChange() {
+            document.getElementById('lunch-msg').className = 'hidden';
+            renderLunch();
+        }
+        function editLunchOptions() {
+            if (Object.keys(lunchVotes).length) return photoMsg('lunch-set-msg', 'もう投票が始まってるので変更できません', false);
+            lunchEditing = true;
+            document.getElementById('lunch-opt-A').value = lunchOptions ? lunchOptions.A : '';
+            document.getElementById('lunch-opt-B').value = lunchOptions ? lunchOptions.B : '';
+            renderLunch();
+        }
+        async function setLunchOptions() {
+            const A = document.getElementById('lunch-opt-A').value.trim();
+            const B = document.getElementById('lunch-opt-B').value.trim();
+            if (!A || !B) return photoMsg('lunch-set-msg', '候補を2つとも入力してね', false);
+            if (A === B) return photoMsg('lunch-set-msg', '違うお店を2つ入れてね', false);
+            const btn = document.getElementById('lunch-set-btn');
+            btn.disabled = true;
+            try {
+                const res = await fetch(SYNC_DB_URL + '/pub/lunch/options.json', { method: 'PUT', body: JSON.stringify({ A, B }) });
+                if (!res.ok) throw new Error(res.status);
+                lunchOptions = { A, B };
+                lunchEditing = false;
+                renderLunch();
+                photoMsg('lunch-set-msg', '候補が決まった！みんなで投票しよう', true);
+            } catch (e) {
+                photoMsg('lunch-set-msg', Object.keys(lunchVotes).length ? 'もう投票が始まってるので変更できません' : '送信に失敗しました。もう一度どうぞ', false);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        async function voteLunch(target) {
+            const id = document.getElementById('lunch-name').value;
+            if (!id) return photoMsg('lunch-msg', 'まず自分の名前を選んでね', false);
+            if (lunchWinner) return photoMsg('lunch-msg', '決定済みのため変更できません', false);
+            try {
+                const res = await fetch(SYNC_DB_URL + '/pub/lunch/votes/' + id + '.json', { method: 'PUT', body: JSON.stringify(target) });
+                if (!res.ok) throw new Error(res.status);
+                lunchVotes = Object.assign({}, lunchVotes, { [id]: target });
+                renderLunch();
+                photoMsg('lunch-msg', `「${lunchOptions[target]}」に投票したよ！`, true);
+            } catch (e) {
+                photoMsg('lunch-msg', '投票に失敗しました。もう一度どうぞ', false);
+            }
+        }
+        function renderLunch() {
+            const has = !!lunchOptions, editing = !has || lunchEditing, me = document.getElementById('lunch-name').value;
+            document.getElementById('lunch-entry').classList.toggle('hidden', !!lunchWinner);
+            document.getElementById('lunch-setup').classList.toggle('hidden', !editing);
+            document.getElementById('lunch-vs').classList.toggle('hidden', editing);
+            document.getElementById('lunch-vote-area').classList.toggle('hidden', editing);
+            document.getElementById('lunch-edit-btn').classList.toggle('hidden', Object.keys(lunchVotes).length > 0);
+            if (has) {
+                document.getElementById('lunch-vs-A').textContent = lunchOptions.A;
+                document.getElementById('lunch-vs-B').textContent = lunchOptions.B;
+                document.getElementById('lunch-vote-btns').innerHTML = ['A', 'B'].map(k => {
+                    const mine = lunchVotes[me] === k;
+                    return `<button onclick="voteLunch('${k}')" class="rounded-2xl px-2 py-4 text-sm font-extrabold break-words active:scale-95 transition ${mine ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-autumn-text'}">${escapeHtml(lunchOptions[k])}${mine ? '<span class="block text-[11px] mt-1">✓ 投票中</span>' : ''}</button>`;
+                }).join('');
+            }
+            document.getElementById('lunch-status').innerHTML = '<span class="text-[11px] font-bold text-gray-500 mr-1">投票済み</span>' +
+                APPLE_PLAYERS.map(p => photoChip(p.name, !!lunchVotes[p.id])).join('');
+
+            document.getElementById('lunch-result').classList.toggle('hidden', !(lunchWinner && has));
+            if (!(lunchWinner && has)) return;
+            document.getElementById('lunch-winner').textContent = '🎉 ' + lunchOptions[lunchWinner];
+            document.getElementById('lunch-ranking').innerHTML = [lunchWinner, lunchWinner === 'A' ? 'B' : 'A'].map(k => {
+                const who = APPLE_PLAYERS.filter(p => lunchVotes[p.id] === k);
+                const win = k === lunchWinner;
+                return `
+                    <div class="flex items-center gap-2 rounded-xl px-3 py-2 ${win ? 'bg-autumn-accent/10' : 'bg-autumn-bg'}">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-autumn-text break-words">${escapeHtml(lunchOptions[k])}</p>
+                            ${who.length ? `<p class="text-[10px] font-bold text-gray-500">${who.map(p => p.name).join('・')}</p>` : ''}
+                        </div>
+                        <span class="text-sm font-extrabold ${win ? 'text-autumn-accent' : 'text-gray-400'}">${who.length}票</span>
+                    </div>`;
+            }).join('');
+        }
+        // 発表の瞬間：2つの候補が交互に点滅して、決まった方で止まる
+        function playLunchReveal() {
+            renderLunch();
+            if (!lunchOptions) return;
+            openCelebrate(`
+                <p class="text-xs font-extrabold tracking-widest text-gray-500">本日のランチは……</p>
+                <div class="h-24 flex items-center justify-center">
+                    <p id="lunch-spin" class="text-xl font-extrabold text-autumn-text break-words">？？？</p>
+                </div>`);
+            document.querySelectorAll('.confetti').forEach(el => el.remove());
+            const seq = [];
+            let d = 90;
+            while (d < 600) { seq.push(d); d *= 1.15; }
+            const keys = ['A', 'B'];
+            const startOther = (seq.length % 2 === 0) === (lunchWinner === 'A');   // 最後が当選側になるよう開始を調整
+            let t = 0;
+            seq.forEach((dd, k) => {
+                t += dd;
+                setTimeout(() => {
+                    const el = document.getElementById('lunch-spin');
+                    if (el) el.textContent = lunchOptions[keys[(k + (startOther ? 1 : 0)) % 2]];
+                }, t);
+            });
+            setTimeout(() => {
+                openCelebrate(`
+                    <p class="text-5xl">🍽️</p>
+                    ${celebrateBadge('LUNCH DECIDED!')}
+                    <p class="text-2xl font-extrabold text-autumn-accent break-words">${escapeHtml(lunchOptions[lunchWinner])}</p>
+                    <p class="text-sm font-bold text-autumn-text">決選投票、決着！<br>いざ、腹ごしらえへ！</p>`);
+                document.getElementById('lunch-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, t + 700);
+        }
+
+        // ==========================================
         // 雨天BU：代替プラン投票（ステージ12）
         //   投票は /pub/bu/{投票者} = 候補id。幹事が行き先を決めると /res/bu/winner に入る。
         //   同票のときは幹事がその中から選ぶ。
@@ -2125,6 +2313,8 @@
             renderPairs();
             buildBuPlayers();
             renderBu();
+            buildLunchPlayers();
+            renderLunch();
             renderShop();
             renderIntro();
             renderApple();

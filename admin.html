@@ -117,6 +117,24 @@
                 </div>
             </details>
 
+            <!-- M2 ランチ決選投票 -->
+            <details class="bg-card-bg rounded-3xl shadow-soft">
+                <summary class="flex items-center justify-between p-5 cursor-pointer">
+                    <span class="text-sm font-bold text-autumn-text">⚔️ M2 ランチ決選投票 <span id="lunch-state" class="text-[11px] text-gray-400"></span></span>
+                    <span class="chev text-gray-400 transition-transform">›</span>
+                </summary>
+                <div class="px-5 pb-5 space-y-2 text-xs font-bold text-autumn-text">
+                    <div id="lunch-voted" class="flex flex-wrap gap-1.5"></div>
+                    <p class="text-[11px] text-gray-500 pt-1">得票数（「決定」を押すと全員の画面で発表。同票なら好きな方を選んでOK）</p>
+                    <div id="lunch-info" class="space-y-1.5"></div>
+                    <p id="lunch-msg" class="hidden text-[11px] font-bold"></p>
+                    <div class="flex gap-2">
+                        <button onclick="saveLunchResult(null)" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">発表を取り消す</button>
+                        <button onclick="resetLunch()" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">全リセット</button>
+                    </div>
+                </div>
+            </details>
+
             <!-- M3 りんご -->
             <details class="bg-card-bg rounded-3xl shadow-soft">
                 <summary class="flex items-center justify-between p-5 cursor-pointer">
@@ -576,6 +594,56 @@
             } catch (e) { msg('photo-msg', 'リセットに失敗しました', false); }
         }
 
+        // ---------- M2 ランチ決選投票 ----------
+        let lunchWinner = null;
+        function renderLunchAdmin() {
+            const lunch = pub.lunch || {}, opts = lunch.options || null, votes = lunch.votes || {};
+            const count = { A: 0, B: 0 };
+            Object.values(votes).forEach(t => { if (t in count) count[t]++; });
+            $('lunch-state').textContent = lunchWinner ? '（発表中）' : !opts ? '（候補未入力）' : `（投票 ${Object.keys(votes).length}/${PLAYERS.length}）`;
+            $('lunch-voted').innerHTML = PLAYERS.map(p => {
+                const ok = !!votes[p.id];
+                return `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${ok ? 'bg-autumn-accent text-white' : 'bg-autumn-bg text-gray-400'}">${ok ? '✓ ' : ''}${p.name}</span>`;
+            }).join('');
+            if (!opts) { $('lunch-info').innerHTML = '<p class="text-gray-400">メンバー画面で候補が入力されるとここに出ます</p>'; return; }
+            const top = Math.max(count.A, count.B);
+            $('lunch-info').innerHTML = ['A', 'B'].map(k => {
+                const n = count[k], lead = top > 0 && n === top, win = lunchWinner === k;
+                const who = PLAYERS.filter(p => votes[p.id] === k).map(p => p.name).join('・');
+                return `
+                    <div class="flex items-center gap-2 rounded-lg px-3 py-2 ${win ? 'bg-autumn-accent/15' : 'bg-autumn-bg'}">
+                        <div class="flex-1 min-w-0">
+                            <p class="leading-snug break-words">${escapeHtml(opts[k])}</p>
+                            ${who ? `<p class="text-[10px] text-gray-500">${who}</p>` : ''}
+                        </div>
+                        <span class="shrink-0 ${lead ? 'text-autumn-accent' : 'text-gray-400'}">${n}票${lead ? ' 👑' : ''}</span>
+                        <button onclick="saveLunchResult('${k}')" class="shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-lg active:scale-95 ${win ? 'bg-autumn-text text-white' : 'bg-autumn-accent text-white'}">${win ? '発表中' : '決定'}</button>
+                    </div>`;
+            }).join('');
+        }
+        async function saveLunchResult(k) {
+            if (k) {
+                const opts = (pub.lunch || {}).options || {};
+                if (!confirm(`「${opts[k]}」に決定して、全員の画面で発表しますか？`)) return;
+            }
+            try {
+                await db('/res/lunch', 'PUT', k ? { key: adminPass, winner: k } : { key: adminPass });
+                lunchWinner = k;
+                renderLunchAdmin();
+                msg('lunch-msg', k ? '全員の画面にランチを発表しました！' : '発表を取り消しました', true);
+            } catch (e) { msg('lunch-msg', '保存に失敗しました', false); }
+        }
+        async function resetLunch() {
+            if (!confirm('ランチ決選投票の候補・投票・発表をすべて消します。よろしいですか？')) return;
+            try {
+                await db('/res/lunch', 'PUT', { key: adminPass });   // 先に発表を解除
+                await Promise.all(PLAYERS.map(p => db('/pub/lunch/votes/' + p.id, 'DELETE')));   // 投票を消してから候補を消す
+                await db('/pub/lunch/options', 'DELETE');
+                lunchWinner = null;
+                msg('lunch-msg', 'リセットしました', true);
+            } catch (e) { msg('lunch-msg', 'リセットに失敗しました', false); }
+        }
+
         // ---------- 雨天BU 代替プラン投票 ----------
         const BU_OPTIONS = [
             { id: 'trick',  name: '🎨 トリックアートミュージアム軽井沢' },
@@ -662,7 +730,7 @@
 
         // ---------- 起動 ----------
         function start() {
-            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); renderBuAdmin();
+            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); renderBuAdmin(); renderLunchAdmin();
             // つなぎっぱなしはステージ番号の1本だけ（裏に回ったら閉じて、戻ったら張り直す）
             let stageEs = null;
             const openStageStream = () => {
@@ -679,7 +747,8 @@
                 stageEs.addEventListener('error', () => { $('sync-status').textContent = '● 同期: 再接続中…'; $('sync-status').className = 'text-[11px] font-bold text-gray-400'; });
             };
             openStageStream();
-            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); renderBuAdmin(); }, 2000);
+            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); renderBuAdmin(); renderLunchAdmin(); }, 2000);
+            poll('/res/lunch/winner', v => { lunchWinner = v === 'A' || v === 'B' ? v : null; renderLunchAdmin(); }, 3000);
             poll('/res/bu/winner', v => { buWinner = BU_OPTIONS.some(o => o.id === v) ? v : null; renderBuAdmin(); }, 3000);
             poll('/res/photo/revealed', v => { photoRevealed = v === true; renderPhotoAdmin(); }, 3000);
             // リアルタイム受信は /tour/stage と /pub の2本だけ。発表データは数秒おきに取得
