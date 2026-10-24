@@ -780,6 +780,44 @@
                 </div>
             </section>
 
+            <!-- ========================================== -->
+            <!-- ステージ13：トークテーマボックス -->
+            <!-- ========================================== -->
+            <section id="stage-13" class="stage space-y-6 hidden">
+                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-5">
+                    <div>
+                        <span class="inline-block px-3 py-1 bg-autumn-bg text-autumn-accent font-bold text-xs rounded-full mb-3">TALK THEME BOX</span>
+                        <h3 class="text-lg font-bold text-autumn-text">💬 トークテーマボックス</h3>
+                        <p class="text-xs font-bold text-gray-500 mt-1">誰かが引くと、全員の画面に同じテーマが出るよ</p>
+                    </div>
+                    <div class="bg-autumn-bg rounded-2xl p-6 text-center space-y-2 min-h-[150px] flex flex-col items-center justify-center">
+                        <p class="text-[11px] font-extrabold tracking-widest text-autumn-accent">TODAY'S THEME</p>
+                        <p id="talk-current" class="text-xl font-extrabold text-autumn-text leading-snug break-words">🎲 ボタンを押してテーマを引こう！</p>
+                    </div>
+                    <button id="talk-draw-btn" onclick="drawTalk()" class="w-full bg-autumn-accent hover:bg-autumn-accent-light text-white font-extrabold py-4 rounded-2xl shadow-sm active:scale-95 transition text-base">🎲 テーマを引く</button>
+                    <p id="talk-left" class="text-[11px] font-bold text-gray-500 text-center"></p>
+                    <p id="talk-draw-msg" class="hidden text-xs font-bold text-center"></p>
+                </div>
+
+                <div class="bg-card-bg rounded-3xl p-6 shadow-soft space-y-3">
+                    <p class="text-xs font-extrabold tracking-widest text-autumn-accent">✏️ テーマを追加する</p>
+                    <p class="text-[11px] font-bold text-gray-500">話したいテーマを入れると、ボックスに入るよ（誰が入れたかは出ない）</p>
+                    <div class="flex gap-2">
+                        <input id="talk-input" type="text" maxlength="60" autocomplete="off" placeholder="例：最近ハマってること" class="flex-1 min-w-0 bg-autumn-bg rounded-2xl px-4 py-3 text-sm font-bold text-autumn-text focus:outline-none focus:ring-2 focus:ring-autumn-accent">
+                        <button id="talk-add-btn" onclick="addTalk()" class="shrink-0 bg-autumn-text text-white text-sm font-bold px-5 rounded-2xl active:scale-95">追加</button>
+                    </div>
+                    <p id="talk-add-msg" class="hidden text-xs font-bold text-center"></p>
+                </div>
+
+                <details class="bg-card-bg rounded-3xl shadow-soft">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer text-sm font-bold text-autumn-text">
+                        <span>📜 これまでに出たテーマ <span id="talk-history-count" class="text-[11px] text-gray-400"></span></span>
+                        <span class="text-gray-400">›</span>
+                    </summary>
+                    <ol id="talk-history" class="px-5 pb-5 space-y-1.5 text-xs font-bold text-autumn-text list-decimal list-inside"></ol>
+                </details>
+            </section>
+
         </div>
 
     </main>
@@ -811,10 +849,11 @@
             9: 'standby1 🚗 移動中',
             10: 'standby2 🌙 本日の任務完了',
             11: '自己紹介（仲間を知ろう）',
-            12: '🌧️ 雨天BU：代替プラン投票'
+            12: '🌧️ 雨天BU：代替プラン投票',
+            13: '💬 トークテーマボックス'
         };
         // 幹事メニューでの並び順（待機画面を一番上に）
-        const STAGE_MENU_ORDER = [9, 10, 1, 11, 2, 3, 4, 5, 6, 7, 8, 12];
+        const STAGE_MENU_ORDER = [9, 10, 13, 1, 11, 2, 3, 4, 5, 6, 7, 8, 12];
         const STANDBY_STAGES = [9, 10];
         const DEFAULT_STAGE = 1;
         let currentStage = DEFAULT_STAGE;
@@ -1024,6 +1063,7 @@
                 lunchOptions = lunch.options && lunch.options.A && lunch.options.B ? lunch.options : null;
                 lunchVotes = lunch.votes || {};
                 renderLunch();
+                onTalkPub(v.talk || {});
                 renderApple(); renderTerms(); renderShop();
             };
             appleSources.push(fbPoll('/pub', onPub, 2000));
@@ -1923,6 +1963,116 @@
         }
 
         // ==========================================
+        // トークテーマボックス（ステージ13）
+        //   /pub/talk/added/{id} = みんなが追加したテーマ
+        //   /pub/talk/used/{id}  = もう引いたテーマ（全部引いたらリセットして2周目）
+        //   /pub/talk/draw       = 今のテーマ { id, t, at }。at が変わったら全員の画面で演出
+        // ==========================================
+        const TALK_BUILTIN = [
+            '最近ハマってること', '人生でいちばん笑った瞬間', '学生時代のいちばんの思い出', '今まででいちばん高い買い物',
+            '宝くじで3億円当たったら何する？', '無人島に1つだけ持っていくなら？', '子どもの頃の夢', '最近ちょっとイラッとしたこと',
+            '自分の中の「これだけは譲れない」こと', '生まれ変わったら何になりたい？', '人生最大の失敗談', '最近いちばん美味しかったもの',
+            '最後の晩餐に食べたいもの', 'いつか行ってみたい国・場所', '今まででいちばんの旅行の思い出', '実は〇〇なんです（ちょっとした秘密）',
+            '最近買ってよかったもの', '10年後の自分はどうなってる？', '休日の理想の過ごし方', '今ハマってるアプリ・ゲーム',
+            '好きな映画・ドラマ・アニメ', 'カラオケの十八番', '自分を動物に例えると？', 'このメンバーの第一印象',
+            'この中でいちばん〇〇なのは誰？（〇〇は引いた人が決める）', 'もしも1日だけ透明人間になれたら', 'タイムマシンでいつに行きたい？', '人生でいちばん緊張した瞬間',
+            '最近の小さな幸せ', '朝型？夜型？理想の1日のスケジュール', '仕事や学校で起きたおもしろエピソード', 'いちばん影響を受けた人',
+            '今年中にやりたいこと', '超能力を1つもらえるなら？', '苦手な食べ物とその理由', '自分の推し・好きな有名人',
+            'ちょっと不思議な話・怖かった体験', '初めて自分のお金で買ったもの', '秋といえば？自分的・秋の楽しみ方', '次のミステリーツアーで行きたい場所'
+        ];
+        let talkAdded = {}, talkUsed = {}, talkDraw = null, talkLoaded = false, talkSpinning = false;
+        function talkAll() {
+            return TALK_BUILTIN.map((t, i) => ({ id: 'b' + i, t }))
+                .concat(Object.keys(talkAdded).map(id => ({ id, t: talkAdded[id] })).filter(x => typeof x.t === 'string'));
+        }
+        function onTalkPub(v) {
+            talkAdded = v.added || {};
+            talkUsed = v.used || {};
+            const d = v.draw && typeof v.draw.t === 'string' ? v.draw : null;
+            const changed = d && (!talkDraw || talkDraw.at !== d.at);
+            talkDraw = d;
+            if (talkLoaded && changed && document.getElementById('stage-13').offsetParent !== null) playTalkReveal(d.t);
+            else if (!talkSpinning) renderTalk();
+            talkLoaded = true;
+        }
+        async function drawTalk() {
+            if (talkSpinning) return;
+            const all = talkAll();
+            let pool = all.filter(x => !talkUsed[x.id]);
+            const btn = document.getElementById('talk-draw-btn');
+            btn.disabled = true;
+            try {
+                if (!pool.length) {   // 全部引いたら2周目
+                    await fetch(SYNC_DB_URL + '/pub/talk/used.json', { method: 'DELETE' });
+                    talkUsed = {};
+                    pool = all;
+                }
+                const pick = pool[Math.floor(Math.random() * pool.length)];
+                const res = await fetch(SYNC_DB_URL + '/pub/talk/draw.json', { method: 'PUT', body: JSON.stringify({ id: pick.id, t: pick.t, at: { '.sv': 'timestamp' } }) });
+                if (!res.ok) throw new Error(res.status);
+                const saved = await res.json();
+                await fetch(SYNC_DB_URL + '/pub/talk/used/' + pick.id + '.json', { method: 'PUT', body: 'true' });
+                talkUsed = Object.assign({}, talkUsed, { [pick.id]: true });
+                talkDraw = saved;
+                playTalkReveal(pick.t);
+            } catch (e) {
+                photoMsg('talk-draw-msg', '引けませんでした。電波を確認してもう一度どうぞ', false);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        async function addTalk() {
+            const input = document.getElementById('talk-input');
+            const t = input.value.trim();
+            if (!t) return photoMsg('talk-add-msg', 'テーマを入力してね', false);
+            if (talkAll().some(x => x.t === t)) return photoMsg('talk-add-msg', 'そのテーマはもう入ってるよ', false);
+            const btn = document.getElementById('talk-add-btn');
+            btn.disabled = true;
+            try {
+                const res = await fetch(SYNC_DB_URL + '/pub/talk/added.json', { method: 'POST', body: JSON.stringify(t) });
+                if (!res.ok) throw new Error(res.status);
+                const { name } = await res.json();
+                talkAdded = Object.assign({}, talkAdded, { [name]: t });
+                input.value = '';
+                renderTalk();
+                photoMsg('talk-add-msg', 'ボックスに入れたよ！', true);
+            } catch (e) {
+                photoMsg('talk-add-msg', '追加できませんでした。もう一度どうぞ', false);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        function renderTalk() {
+            const all = talkAll(), left = all.filter(x => !talkUsed[x.id]).length;
+            if (!talkSpinning) document.getElementById('talk-current').textContent = talkDraw ? talkDraw.t : '🎲 ボタンを押してテーマを引こう！';
+            document.getElementById('talk-left').textContent = `ボックスの中：残り ${left} / ${all.length} テーマ` + (left ? '' : '（次で2周目）');
+            const hist = all.filter(x => talkUsed[x.id]);
+            document.getElementById('talk-history-count').textContent = `（${hist.length}）`;
+            document.getElementById('talk-history').innerHTML = hist.length
+                ? hist.map(x => `<li>${escapeHtml(x.t)}</li>`).join('')
+                : '<p class="text-gray-400">まだありません</p>';
+        }
+        // 引いた瞬間：テーマがパラパラ切り替わって止まる（全員の画面で）
+        function playTalkReveal(final) {
+            talkSpinning = true;
+            renderTalk();
+            const el = document.getElementById('talk-current'), all = talkAll();
+            let t = 0, d = 50;
+            while (d < 380) {
+                t += d;
+                setTimeout(() => { el.textContent = all[Math.floor(Math.random() * all.length)].t; el.classList.add('text-gray-400'); }, t);
+                d *= 1.13;
+            }
+            setTimeout(() => {
+                talkSpinning = false;
+                renderTalk();
+                el.textContent = final;
+                el.classList.remove('text-gray-400');
+                el.classList.remove('shop-pop'); void el.offsetWidth; el.classList.add('shop-pop');
+            }, t + 300);
+        }
+
+        // ==========================================
         // M2 ランチ決選投票
         //   候補は /pub/lunch/options {A, B}（誰かが投票するまで変更OK）
         //   投票は /pub/lunch/votes/{投票者} = 'A' | 'B'。幹事が決めると /res/lunch/winner に入る。
@@ -2315,6 +2465,7 @@
             renderBu();
             buildLunchPlayers();
             renderLunch();
+            renderTalk();
             renderShop();
             renderIntro();
             renderApple();

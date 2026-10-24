@@ -101,6 +101,23 @@
                 <p id="stage-err" class="hidden text-[11px] font-bold text-autumn-accent"></p>
             </section>
 
+            <!-- トークテーマ -->
+            <details class="bg-card-bg rounded-3xl shadow-soft">
+                <summary class="flex items-center justify-between p-5 cursor-pointer">
+                    <span class="text-sm font-bold text-autumn-text">💬 トークテーマ <span id="talk-state" class="text-[11px] text-gray-400"></span></span>
+                    <span class="chev text-gray-400 transition-transform">›</span>
+                </summary>
+                <div class="px-5 pb-5 space-y-2 text-xs font-bold text-autumn-text">
+                    <p class="text-[11px] text-gray-500">みんなが追加したテーマ（×で削除）</p>
+                    <div id="talk-added" class="space-y-1.5"></div>
+                    <p id="talk-msg" class="hidden text-[11px] font-bold"></p>
+                    <div class="flex gap-2">
+                        <button onclick="resetTalkUsed()" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">引いた履歴をリセット</button>
+                        <button onclick="resetTalkAll()" class="flex-1 bg-autumn-bg text-gray-500 text-xs font-bold py-2 rounded-xl active:scale-95">全リセット</button>
+                    </div>
+                </div>
+            </details>
+
             <!-- M0 自己紹介 -->
             <details class="bg-card-bg rounded-3xl shadow-soft">
                 <summary class="flex items-center justify-between p-5 cursor-pointer">
@@ -260,9 +277,10 @@
             9: 'standby1 🚗 移動中',
             10: 'standby2 🌙 本日の任務完了',
             11: '自己紹介（仲間を知ろう）',
-            12: '🌧️ 雨天BU：代替プラン投票'
+            12: '🌧️ 雨天BU：代替プラン投票',
+            13: '💬 トークテーマボックス'
         };
-        const STAGE_MENU_ORDER = [9, 10, 1, 11, 2, 3, 4, 5, 6, 7, 8, 12];
+        const STAGE_MENU_ORDER = [9, 10, 13, 1, 11, 2, 3, 4, 5, 6, 7, 8, 12];
         const STANDBY_STAGES = [9, 10];
         const PLAYERS = [
             { id: 'seseri', name: 'せせり' },
@@ -285,7 +303,7 @@
         // ---------- 共通 ----------
         const $ = id => document.getElementById(id);
         const nameOf = id => (PLAYERS.find(p => p.id === id) || { name: id }).name;
-        const stageTag = n => STANDBY_STAGES.includes(n) ? '待機' : n == 1 ? '案内' : n == 11 ? 'M0' : n == 12 ? '雨天' : 'M' + (n - 1);
+        const stageTag = n => STANDBY_STAGES.includes(n) ? '待機' : n == 1 ? '案内' : n == 11 ? 'M0' : n == 12 ? '雨天' : n == 13 ? 'TALK' : 'M' + (n - 1);
         function escapeHtml(str) {
             return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
@@ -594,6 +612,34 @@
             } catch (e) { msg('photo-msg', 'リセットに失敗しました', false); }
         }
 
+        // ---------- トークテーマ ----------
+        function renderTalkAdmin() {
+            const talk = pub.talk || {}, added = talk.added || {}, used = talk.used || {};
+            const ids = Object.keys(added);
+            $('talk-state').textContent = `（追加 ${ids.length}・引いた ${Object.keys(used).length}）`;
+            $('talk-added').innerHTML = ids.length ? ids.map(id => `
+                <div class="flex items-center gap-2 bg-autumn-bg rounded-lg px-3 py-1.5">
+                    <span class="flex-1 min-w-0 break-words">${escapeHtml(added[id])}${used[id] ? ' <span class="text-gray-400">（引いた）</span>' : ''}</span>
+                    <button onclick="deleteTalk('${id}')" class="shrink-0 text-gray-400 px-2">×</button>
+                </div>`).join('') : '<p class="text-gray-400">まだありません</p>';
+        }
+        async function deleteTalk(id) {
+            const t = ((pub.talk || {}).added || {})[id];
+            if (!confirm(`「${t}」を削除しますか？`)) return;
+            try { await db('/pub/talk/added/' + id, 'DELETE'); await db('/pub/talk/used/' + id, 'DELETE'); msg('talk-msg', '削除しました', true); }
+            catch (e) { msg('talk-msg', '削除に失敗しました', false); }
+        }
+        async function resetTalkUsed() {
+            if (!confirm('引いた履歴を消して、全テーマをボックスに戻します。よろしいですか？')) return;
+            try { await db('/pub/talk/used', 'DELETE'); await db('/pub/talk/draw', 'DELETE'); msg('talk-msg', 'リセットしました', true); }
+            catch (e) { msg('talk-msg', 'リセットに失敗しました', false); }
+        }
+        async function resetTalkAll() {
+            if (!confirm('追加されたテーマも含めて全部消します。よろしいですか？')) return;
+            try { await Promise.all(['draw', 'used', 'added'].map(k => db('/pub/talk/' + k, 'DELETE'))); msg('talk-msg', 'リセットしました', true); }
+            catch (e) { msg('talk-msg', 'リセットに失敗しました', false); }
+        }
+
         // ---------- M2 ランチ決選投票 ----------
         let lunchWinner = null;
         function renderLunchAdmin() {
@@ -730,7 +776,7 @@
 
         // ---------- 起動 ----------
         function start() {
-            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); renderBuAdmin(); renderLunchAdmin();
+            renderStages(); renderIntro(); renderApple(true); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); renderBuAdmin(); renderLunchAdmin(); renderTalkAdmin();
             // つなぎっぱなしはステージ番号の1本だけ（裏に回ったら閉じて、戻ったら張り直す）
             let stageEs = null;
             const openStageStream = () => {
@@ -747,7 +793,7 @@
                 stageEs.addEventListener('error', () => { $('sync-status').textContent = '● 同期: 再接続中…'; $('sync-status').className = 'text-[11px] font-bold text-gray-400'; });
             };
             openStageStream();
-            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); renderBuAdmin(); renderLunchAdmin(); }, 2000);
+            poll('/pub', v => { pub = v || {}; renderIntro(); renderApple(false); renderShop(); renderTerms(); renderPhotoAdmin(); renderPairsAdmin(); renderBuAdmin(); renderLunchAdmin(); renderTalkAdmin(); }, 2000);
             poll('/res/lunch/winner', v => { lunchWinner = v === 'A' || v === 'B' ? v : null; renderLunchAdmin(); }, 3000);
             poll('/res/bu/winner', v => { buWinner = BU_OPTIONS.some(o => o.id === v) ? v : null; renderBuAdmin(); }, 3000);
             poll('/res/photo/revealed', v => { photoRevealed = v === true; renderPhotoAdmin(); }, 3000);
